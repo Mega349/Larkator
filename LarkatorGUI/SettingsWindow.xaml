@@ -6,13 +6,15 @@
         xmlns:local="clr-namespace:LarkatorGUI"
         xmlns:diag="clr-namespace:System.Diagnostics;assembly=WindowsBase"
         mc:Ignorable="d"
-        SizeToContent="WidthAndHeight" MinWidth="360" MaxWidth="500"
+        SizeToContent="WidthAndHeight" MinWidth="360" MaxWidth="600"
         Title="Settings" Background="{DynamicResource WindowBackgroundBrush}">
     <Window.Resources>
         <local:SettingsWindowModel x:Key="Model"/>
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="AntiqueWhite"/>
         </Style>
+        <local:SftpPasswordEnabledConverter x:Key="SftpPasswordEnabledConverter"/>
+        <local:BoolConverter x:Key="BoolConverter"/>
     </Window.Resources>
     <StackPanel>
         <Grid Margin="2,4,0,16">
@@ -38,7 +40,22 @@
                 <RowDefinition Height="1*"/>
                 <RowDefinition Height="1*"/>
                 <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
             </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Grid.ColumnSpan="2">
+                <TextBlock FontWeight="Bold">Local Settings</TextBlock>
+            </Border>
 
             <Border Grid.Row="1" Grid.Column="0">
                 <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">Save file (.ark)</TextBlock>
@@ -49,81 +66,180 @@
             </Border>
 
             <Border Grid.Row="2" Grid.Column="0">
-                <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">Max level</TextBlock>
+                <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">Auto Reload</TextBlock>
             </Border>
             <Border Grid.Row="2" Grid.Column="1">
+                <CheckBox ToolTip="Automatically reload when savefile changes (only for local files)"
+                          IsChecked="{Binding Source={StaticResource Model}, Path=Settings.AutoReload, Mode=TwoWay}" 
+                          HorizontalAlignment="Right" Margin="7,4"/>
+            </Border>
+
+            <Border Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2">
+                <TextBlock FontWeight="Bold">SFTP Settings</TextBlock>
+            </Border>
+
+            <Border Grid.Row="4" Grid.Column="0">
+                <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">Use SFTP</TextBlock>
+            </Border>
+            <Border Grid.Row="4" Grid.Column="1">
+                <CheckBox ToolTip="Load savegame from remote server via SFTP"
+                          IsChecked="{Binding Source={StaticResource Model}, Path=Settings.UseSftp, Mode=TwoWay}" 
+                          HorizontalAlignment="Right" Margin="7,4"/>
+            </Border>
+
+            <Border Grid.Row="5" Grid.Column="0">
+                <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">SFTP Host</TextBlock>
+            </Border>
+            <Border Grid.Row="5" Grid.Column="1">
+                <TextBox Text="{Binding Source={StaticResource Model}, Path=Settings.SftpHost, Mode=TwoWay}"
+                         IsEnabled="{Binding Source={StaticResource Model}, Path=Settings.UseSftp}"
+                         Margin="0,2" />
+            </Border>
+
+            <Border Grid.Row="6" Grid.Column="0">
+                <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">SFTP Port</TextBlock>
+            </Border>
+            <Border Grid.Row="6" Grid.Column="1">
+                <local:NumericEntryControl Value="{Binding Source={StaticResource Model}, Path=Settings.SftpPort, Mode=TwoWay}"
+                                          IsEnabled="{Binding Source={StaticResource Model}, Path=Settings.UseSftp}"
+                                          MaxWidth="90" HorizontalAlignment="Right"
+                                          MaxValue="65535" MinValue="1" Increment="1" LargeIncrement="100" Margin="0,0,2,0"/>
+            </Border>
+
+            <Border Grid.Row="7" Grid.Column="0">
+                <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">SFTP Username</TextBlock>
+            </Border>
+            <Border Grid.Row="7" Grid.Column="1">
+                <TextBox Text="{Binding Source={StaticResource Model}, Path=Settings.SftpUsername, Mode=TwoWay}"
+                         IsEnabled="{Binding Source={StaticResource Model}, Path=Settings.UseSftp}"
+                         Margin="0,2" />
+            </Border>
+
+            <Border Grid.Row="8" Grid.Column="0">
+                <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">SFTP Password</TextBlock>
+            </Border>
+            <Border Grid.Row="8" Grid.Column="1">
+                <PasswordBox x:Name="SftpPasswordBox" Margin="0,2" 
+                            PasswordChanged="SftpPasswordBox_PasswordChanged">
+                    <PasswordBox.IsEnabled>
+                        <MultiBinding Converter="{StaticResource SftpPasswordEnabledConverter}">
+                            <Binding Source="{StaticResource Model}" Path="Settings.UseSftp" />
+                            <Binding Source="{StaticResource Model}" Path="Settings.UsePrivateKey" />
+                        </MultiBinding>
+                    </PasswordBox.IsEnabled>
+                </PasswordBox>
+            </Border>
+
+            <Border Grid.Row="9" Grid.Column="0">
+                <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">Remote Path</TextBlock>
+            </Border>
+            <Border Grid.Row="9" Grid.Column="1">
+                <TextBox Text="{Binding Source={StaticResource Model}, Path=Settings.SftpRemotePath, Mode=TwoWay}"
+                         IsEnabled="{Binding Source={StaticResource Model}, Path=Settings.UseSftp}"
+                         Margin="0,2" />
+            </Border>
+
+            <Border Grid.Row="10" Grid.Column="0">
+                <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">Use SSH Private Key</TextBlock>
+            </Border>
+            <Border Grid.Row="10" Grid.Column="1">
+                <CheckBox ToolTip="Use SSH key authentication instead of password"
+                          IsChecked="{Binding Source={StaticResource Model}, Path=Settings.UsePrivateKey, Mode=TwoWay}" 
+                          IsEnabled="{Binding Source={StaticResource Model}, Path=Settings.UseSftp}"
+                          HorizontalAlignment="Right" Margin="7,4"/>
+            </Border>
+            
+            <Border Grid.Row="11" Grid.Column="0">
+                <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">Private Key Path</TextBlock>
+            </Border>
+            <Border Grid.Row="11" Grid.Column="1">
+                <local:FileEntryBox Value="{Binding Source={StaticResource Model}, Path=Settings.PrivateKeyPath, Mode=TwoWay}"
+                                   IsEnabled="{Binding Source={StaticResource Model}, Path=Settings.UsePrivateKey}"
+                                   Filter="Private Key Files|*.*" DefaultExt="" Title="Select private key file"/>
+            </Border>
+            
+            <Border Grid.Row="12" Grid.Column="0">
+                <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">Key Passphrase</TextBlock>
+            </Border>
+            <Border Grid.Row="12" Grid.Column="1">
+                <PasswordBox Name="PrivateKeyPassphraseBox" Margin="0,2" 
+                            IsEnabled="{Binding Source={StaticResource Model}, Path=Settings.UsePrivateKey}"
+                            PasswordChanged="PrivateKeyPassphraseBox_PasswordChanged"
+                            />
+            </Border>
+
+            <Border Grid.Row="13" Grid.Column="0" Grid.ColumnSpan="2">
+                <TextBlock FontWeight="Bold">Gameplay Settings</TextBlock>
+            </Border>
+
+            <Border Grid.Row="14" Grid.Column="0">
+                <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">Max level</TextBlock>
+            </Border>
+            <Border Grid.Row="14" Grid.Column="1">
                 <local:NumericEntryControl ToolTip="The maximum level of normal spawns in the map (only affects filtering)"
                                                Value="{Binding Source={StaticResource Model}, Path=Settings.MaxLevel, Mode=TwoWay}" MaxWidth="90" HorizontalAlignment="Right"
                                                MaxValue="1000" MinValue="1" Increment="1" LargeIncrement="5" Margin="0,0,2,0"/>
             </Border>
 
-            <Border Grid.Row="3" Grid.Column="0">
+            <Border Grid.Row="15" Grid.Column="0">
                 <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">Level step</TextBlock>
             </Border>
-            <Border Grid.Row="3" Grid.Column="1">
+            <Border Grid.Row="15" Grid.Column="1">
                 <local:NumericEntryControl ToolTip="The step between levels, typically 4 for 120 or 5 for 150 (only affects filter adjustments)"
                                                Value="{Binding Source={StaticResource Model}, Path=Settings.LevelStep, Mode=TwoWay}" MaxWidth="90" HorizontalAlignment="Right"
                                                MaxValue="100" MinValue="1" Increment="1" LargeIncrement="1" Margin="0,0,2,0"/>
             </Border>
 
-            <Border Grid.Row="4" Grid.Column="0">
+            <Border Grid.Row="16" Grid.Column="0">
                 <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">List font size</TextBlock>
             </Border>
-            <Border Grid.Row="4" Grid.Column="1">
+            <Border Grid.Row="16" Grid.Column="1">
                 <local:NumericEntryControl ToolTip="Font size of the search filters and results  (requires a restart)"
                                                Value="{Binding Source={StaticResource Model}, Path=Settings.ListFontSize, Mode=TwoWay}" MaxWidth="90" HorizontalAlignment="Right"
                                                MaxValue="17" MinValue="11" Increment="1" LargeIncrement="1" Margin="0,0,2,0"/>
             </Border>
 
-            <Border Grid.Row="5" Grid.Column="0">
+            <Border Grid.Row="17" Grid.Column="0">
                 <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">Conversion delay (ms)</TextBlock>
             </Border>
-            <Border Grid.Row="5" Grid.Column="1">
+            <Border Grid.Row="17" Grid.Column="1">
                 <local:NumericEntryControl ToolTip="The delay between detecting a change to the saved ark and running the conversion process (in milliseconds)"
                                                Value="{Binding Source={StaticResource Model}, Path=Settings.ConvertDelay, Mode=TwoWay}" MaxWidth="110" HorizontalAlignment="Right"
                                                MaxValue="10000" MinValue="200" Increment="100" LargeIncrement="500" Margin="0,0,2,0"/>
             </Border>
 
-            <Border Grid.Row="6" Grid.Column="0">
+            <Border Grid.Row="18" Grid.Column="0">
                 <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">Teleport height offset</TextBlock>
             </Border>
-            <Border Grid.Row="6" Grid.Column="1">
+            <Border Grid.Row="18" Grid.Column="1">
                 <local:NumericEntryControl ToolTip="The distance above the creature when teleporting (in Unreal units)"
                                                Value="{Binding Source={StaticResource Model}, Path=Settings.TeleportHeightOffset, Mode=TwoWay}" MaxWidth="110" HorizontalAlignment="Right"
                                                MaxValue="3000" MinValue="0" Increment="100" LargeIncrement="500" Margin="0,0,2,0"/>
             </Border>
 
-            <Border Grid.Row="7" Grid.Column="0">
+            <Border Grid.Row="19" Grid.Column="0">
                 <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">Enable fly after teleport</TextBlock>
             </Border>
-            <Border Grid.Row="7" Grid.Column="1">
+            <Border Grid.Row="19" Grid.Column="1">
                 <CheckBox ToolTip="Include 'cheat fly' in the teleport command"
                                                IsChecked="{Binding Source={StaticResource Model}, Path=Settings.TeleportFly, Mode=TwoWay}" HorizontalAlignment="Right"
                                                Margin="7,4"/>
             </Border>
 
-            <Border Grid.Row="8" Grid.Column="0">
+            <Border Grid.Row="20" Grid.Column="0">
                 <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">Enable ghost after teleport</TextBlock>
             </Border>
-            <Border Grid.Row="8" Grid.Column="1">
+            <Border Grid.Row="20" Grid.Column="1">
                 <CheckBox ToolTip="Include 'cheat ghost' in the teleport command (only if fly is also set)"
                                                IsChecked="{Binding Source={StaticResource Model}, Path=Settings.TeleportGhost, Mode=TwoWay}" HorizontalAlignment="Right"
                                                Margin="7,4"/>
             </Border>
-            <Border Grid.Row="9" Grid.Column="0">
+            <Border Grid.Row="21" Grid.Column="0">
                 <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">Hide untameable dinosaurs</TextBlock>
             </Border>
-            <Border Grid.Row="9" Grid.Column="1">
+            <Border Grid.Row="21" Grid.Column="1">
                 <CheckBox ToolTip="Hide dinosaurs that cannot be tamed"
                                                IsChecked="{Binding Source={StaticResource Model}, Path=Settings.HideUntameable, Mode=TwoWay}" HorizontalAlignment="Right"
-                                               Margin="7,4"/>
-            </Border>
-            <Border Grid.Row="10" Grid.Column="0">
-                <TextBlock VerticalAlignment="Center" Margin="0,0,4,0">Show "Force Reload" button</TextBlock>
-            </Border>
-            <Border Grid.Row="10" Grid.Column="1">
-                <CheckBox ToolTip="Show &quot;Force Reload&quot; button that will immediately reload the savegame (should never be needed)"
-                                               IsChecked="{Binding Source={StaticResource Model}, Path=Settings.ShowForceReload, Mode=TwoWay}" HorizontalAlignment="Right"
                                                Margin="7,4"/>
             </Border>
         </Grid>
