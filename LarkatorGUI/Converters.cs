@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Media;
 
 namespace LarkatorGUI
 {
@@ -185,6 +186,52 @@ namespace LarkatorGUI
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Konvertiert zu true, wenn SFTP aktiv ist aber kein Private Key verwendet wird
+    /// </summary>
+    public class SftpPasswordEnabledConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (values.Length != 2)
+                return false;
+                
+            if (values[0] is bool useSftp && values[1] is bool usePrivateKey)
+            {
+                return useSftp && !usePrivateKey;
+            }
+            
+            return false;
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Einfacher Boolean-Konverter für XAML
+    /// </summary>
+    public class BoolConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool boolValue)
+                return boolValue;
+                
+            return false;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool boolValue)
+                return boolValue;
+                
+            return false;
         }
     }
 }

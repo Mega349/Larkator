@@ -215,13 +215,16 @@
         <FrameworkElement x:Name="dummyElement"/>
 
         <Border x:Name="statusPanel" Grid.Row="1" Background="#20402080" Padding="8,6,8,3">
-            <Grid Height="16" TextBlock.Foreground="AntiqueWhite">
+            <Grid>
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto" MinWidth="200"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{Binding StatusText}"/>
-                <TextBlock Grid.Column="1" Text="{Binding StatusDetailText}" TextAlignment="Right"/>
+                <TextBlock Grid.Column="0" Text="{Binding StatusText}" TextWrapping="NoWrap" Foreground="AntiqueWhite" Opacity="0.5"/>
+                <TextBlock Grid.Column="1" Text="{Binding StatusDetailText}" TextWrapping="NoWrap" Foreground="AntiqueWhite" Opacity="0.5" HorizontalAlignment="Right"/>
+                <TextBlock Grid.Column="2" Text="SFTP Mode" Foreground="#FFAAFF" Opacity="0.7" Margin="8,0,0,0" FontWeight="Bold"
+                           Visibility="{Binding SftpConfig.UseSftp, ElementName=root, Converter={StaticResource BoolToVisibilityConverter}}"/>
             </Grid>
         </Border>
 
@@ -260,7 +263,8 @@
                         <DataGridTemplateColumn Width="*">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Species}" TextAlignment="Left" Margin="0,0,2,0"/>
+                                    <TextBlock Text="{Binding Species}" TextAlignment="Left" Margin="0,0,2,0" 
+                                               TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
@@ -424,8 +428,7 @@
                         <fa:ImageAwesome Icon="Remove" Height="30" Width="30" Margin="8" Foreground="#88FFFF00" ToolTip="Remove user settings &amp; exit" MouseDown="Dev_RemoveSettings_Click"/>
                     </StackPanel>
                     <fa:ImageAwesome Icon="cogs" Width="30" Height="30" Margin="8" Foreground="#44ffffff" ToolTip="Settings" MouseDown="Settings_Click"/>
-                    <fa:ImageAwesome Icon="refresh" Width="30" Height="30" Margin="8" Foreground="#44ffffff" ToolTip="Re-read Savefile" MouseDown="Refresh_Click"
-                                     Visibility="{Binding Source={StaticResource Settings}, Path=Default.ShowForceReload, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    <fa:ImageAwesome Icon="refresh" Width="30" Height="30" Margin="8" Foreground="#44ffffff" ToolTip="Reload savegame" MouseDown="Refresh_Click"/>
                 </StackPanel>
             </Grid>
         </Grid>
