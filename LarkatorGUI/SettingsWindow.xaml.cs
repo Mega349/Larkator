@@ -84,7 +84,7 @@ namespace LarkatorGUI
 
         public SettingsWindowModel()
         {
-            Settings = new Properties.Settings();
+            Settings = Properties.Settings.Default;
         }
     }
 }
