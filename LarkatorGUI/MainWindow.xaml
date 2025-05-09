@@ -220,10 +220,23 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="{Binding StatusText}" TextWrapping="NoWrap" Foreground="AntiqueWhite" Opacity="0.5"/>
                 <TextBlock Grid.Column="1" Text="{Binding StatusDetailText}" TextWrapping="NoWrap" Foreground="AntiqueWhite" Opacity="0.5" HorizontalAlignment="Right"/>
-                <TextBlock Grid.Column="2" Text="SFTP Mode" Foreground="#FFAAFF" Opacity="0.7" Margin="8,0,0,0" FontWeight="Bold"
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
+                          Visibility="{Binding SftpConfig.UseSftp, ElementName=root, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <TextBlock Text="Server:" Foreground="#FFAAFF" Opacity="0.7" Margin="8,0,5,0" VerticalAlignment="Center"/>
+                    <ComboBox x:Name="ServerProfilesComboBox" Width="150" Margin="0,0,5,0" 
+                             ItemsSource="{Binding SftpProfileManager.Profiles}" 
+                             SelectedItem="{Binding SftpProfileManager.SelectedProfile}" 
+                             DisplayMemberPath="Name"
+                             ToolTip="Select a server profile"/>
+                    <fa:ImageAwesome Icon="Cog" Height="14" Width="14" Margin="0,0,8,0" Foreground="#FFAAFF" Opacity="0.7" 
+                                   MouseDown="ServerProfiles_Click" VerticalAlignment="Center" Cursor="Hand"
+                                   ToolTip="Manage server profiles"/>
+                </StackPanel>
+                <TextBlock Grid.Column="3" Text="SFTP Mode" Foreground="#FFAAFF" Opacity="0.7" Margin="8,0,0,0" FontWeight="Bold"
                            Visibility="{Binding SftpConfig.UseSftp, ElementName=root, Converter={StaticResource BoolToVisibilityConverter}}"/>
             </Grid>
         </Border>

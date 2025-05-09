@@ -130,5 +130,11 @@
         <Setting Name="PrivateKeyPassphrase" Type="System.String" Scope="User">
             <Value Profile="(Default)"/>
         </Setting>
+        <Setting Name="SftpServerProfiles" Type="System.String" Scope="User">
+            <Value Profile="(Default)">[]</Value>
+        </Setting>
+        <Setting Name="SelectedServerProfile" Type="System.String" Scope="User">
+            <Value Profile="(Default)"/>
+        </Setting>
     </Settings>
 </SettingsFile>

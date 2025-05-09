@@ -479,5 +479,29 @@ namespace LarkatorGUI.Properties {
                 this["PrivateKeyPassphrase"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("[]")]
+        public string SftpServerProfiles {
+            get {
+                return ((string)(this["SftpServerProfiles"]));
+            }
+            set {
+                this["SftpServerProfiles"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string SelectedServerProfile {
+            get {
+                return ((string)(this["SelectedServerProfile"]));
+            }
+            set {
+                this["SelectedServerProfile"] = value;
+            }
+        }
     }
 }
