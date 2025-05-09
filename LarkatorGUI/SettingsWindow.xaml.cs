@@ -8,22 +8,39 @@ namespace LarkatorGUI
     public partial class SettingsWindow : Window
     {
         private SettingsWindowModel Model { get { return Resources["Model"] as SettingsWindowModel; } }
+        
+        // Property to display the current profile name
+        public string CurrentProfileName 
+        {
+            get 
+            {
+                var profileManager = SftpProfileManager.Instance;
+                if (profileManager.SelectedProfile != null)
+                {
+                    return profileManager.SelectedProfile.Name;
+                }
+                return "None";
+            }
+        }
 
         public SettingsWindow()
         {
             InitializeComponent();
             
-            // Initialize the password box with the saved password if available
-            if (!string.IsNullOrEmpty(Properties.Settings.Default.SftpPassword))
-            {
-                SftpPasswordBox.Password = Properties.Settings.Default.SftpPassword;
-            }
-            
-            // Initialize the private key passphrase box if available
-            if (!string.IsNullOrEmpty(Properties.Settings.Default.PrivateKeyPassphrase))
-            {
-                PrivateKeyPassphraseBox.Password = Properties.Settings.Default.PrivateKeyPassphrase;
-            }
+            // Set window to update when activated
+            this.Activated += SettingsWindow_Activated;
+        }
+        
+        private void SettingsWindow_Activated(object sender, System.EventArgs e)
+        {
+            // Update the current profile display
+            UpdateCurrentProfileDisplay();
+        }
+        
+        private void UpdateCurrentProfileDisplay()
+        {
+            // Force a refresh of the current profile display
+            CurrentProfileTextBlock.GetBindingExpression(System.Windows.Controls.TextBlock.TextProperty)?.UpdateTarget();
         }
 
         private void Apply_Click(object sender, RoutedEventArgs e)
@@ -49,17 +66,15 @@ namespace LarkatorGUI
         {
             Model.Settings.OutputDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), Properties.Resources.ProgramName);
         }
-        
-        private void SftpPasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
+
+        private void ManageServerProfiles_Click(object sender, RoutedEventArgs e)
         {
-            // Update the password in settings
-            Model.Settings.SftpPassword = SftpPasswordBox.Password;
-        }
-        
-        private void PrivateKeyPassphraseBox_PasswordChanged(object sender, RoutedEventArgs e)
-        {
-            // Update the private key passphrase in settings
-            Model.Settings.PrivateKeyPassphrase = PrivateKeyPassphraseBox.Password;
+            var window = new ServerProfilesWindow();
+            window.Owner = this;
+            window.ShowDialog();
+            
+            // Update current profile display after profile manager closes
+            UpdateCurrentProfileDisplay();
         }
     }
 

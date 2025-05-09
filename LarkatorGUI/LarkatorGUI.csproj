@@ -32,7 +32,7 @@
     <PublisherName>coldino</PublisherName>
     <AutorunEnabled>true</AutorunEnabled>
     <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.19.0.0</ApplicationVersion>
+    <ApplicationVersion>1.19.1.0</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <CreateDesktopShortcut>true</CreateDesktopShortcut>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -177,6 +177,14 @@
     <Compile Include="SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="SftpProfileManager.cs" />
+    <Compile Include="SftpServerProfile.cs" />
+    <Compile Include="ServerProfileDialog.xaml.cs">
+      <DependentUpon>ServerProfileDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ServerProfilesWindow.xaml.cs">
+      <DependentUpon>ServerProfilesWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Welcome.xaml.cs">
       <DependentUpon>Welcome.xaml</DependentUpon>
     </Compile>
@@ -202,6 +210,14 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="SettingsWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ServerProfileDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ServerProfilesWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
