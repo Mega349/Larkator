@@ -6,6 +6,8 @@ using Larkator.Common;
 
 using Newtonsoft.Json;
 
+using Renci.SshNet;
+
 using SavegameToolkitAdditions;
 
 using System;
@@ -18,6 +20,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -29,9 +32,34 @@ using System.Windows.Threading;
 namespace LarkatorGUI
 {
     /// <summary>
+    /// SFTP Connection Settings
+    /// </summary>
+    public class SftpSettings
+    {
+        public string Host { get; set; }
+        public int Port { get; set; } = 22;
+        public string Username { get; set; }
+        public string Password { get; set; }
+        public string RemotePath { get; set; }
+        public bool UseSftp { get; set; } = false;
+        public bool UsePrivateKey { get; set; } = false;
+        public string PrivateKeyPath { get; set; }
+        public string PrivateKeyPassphrase { get; set; }
+
+        public bool IsValid()
+        {
+            return UseSftp && !string.IsNullOrEmpty(Host) && 
+                  !string.IsNullOrEmpty(Username) && 
+                  !string.IsNullOrEmpty(RemotePath) && 
+                  ((!UsePrivateKey && !string.IsNullOrEmpty(Password)) || 
+                   (UsePrivateKey && !string.IsNullOrEmpty(PrivateKeyPath)));
+        }
+    }
+
+    /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window, IDropTarget
+    public partial class MainWindow : Window, IDropTarget, INotifyPropertyChanged
     {
         private const string DEV_STRING = "DEVELOPMENT";
 
@@ -135,6 +163,12 @@ namespace LarkatorGUI
             set { SetValue(IsDevModeProperty, value); }
         }
 
+        public bool AutoReload
+        {
+            get { return (bool)GetValue(AutoReloadProperty); }
+            set { SetValue(AutoReloadProperty, value); }
+        }
+
         public static readonly DependencyProperty IsDevModeProperty =
             DependencyProperty.Register("IsDevMode", typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
 
@@ -177,6 +211,8 @@ namespace LarkatorGUI
         public static readonly DependencyProperty StatusDetailTextProperty =
             DependencyProperty.Register("StatusDetailText", typeof(string), typeof(MainWindow), new PropertyMetadata(""));
 
+        public static readonly DependencyProperty AutoReloadProperty =
+            DependencyProperty.Register("AutoReload", typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
 
         ArkReader arkReader;
         FileSystemWatcher fileWatcher;
@@ -191,6 +227,10 @@ namespace LarkatorGUI
         private DebounceDispatcher refreshSearchesTimer = new DebounceDispatcher();
         private DebounceDispatcher settingsSaveTimer = new DebounceDispatcher();
 
+        public SftpSettings SftpConfig { get; private set; } = new SftpSettings();
+        
+        public SftpProfileManager SftpProfileManager => SftpProfileManager.Instance;
+
         public MainWindow()
         {
             ValidateWindowPositionAndSize();
@@ -198,10 +238,18 @@ namespace LarkatorGUI
             arkReader = new ArkReader();
 
             appVersion = CalculateApplicationVersion();
+            
+            // Set initial dev mode state (restore old behavior)
             IsDevMode = (appVersion == DEV_STRING);
 
             LoadCalibrations();
             DiscoverCalibration();
+
+            // Load SFTP settings
+            LoadSftpSettings();
+            
+            // Set auto reload from settings
+            AutoReload = Properties.Settings.Default.AutoReload;
 
             DataContext = this;
             this.MouseDown += new MouseButtonEventHandler(window_MouseDown);
@@ -216,9 +264,15 @@ namespace LarkatorGUI
             LoadSavedSearches();
             SetupFileWatcher();
 
+            // Add keyboard shortcuts
             var cmdThrowExceptionAndExit = new RoutedCommand();
             cmdThrowExceptionAndExit.InputGestures.Add(new KeyGesture(Key.F2, ModifierKeys.Control));
             CommandBindings.Add(new CommandBinding(cmdThrowExceptionAndExit, (o, e) => Dev_GenerateException_Click(null, null)));
+            
+            // Add shortcut to toggle dev mode with Ctrl+D
+            var cmdToggleDevMode = new RoutedCommand();
+            cmdToggleDevMode.InputGestures.Add(new KeyGesture(Key.D, ModifierKeys.Control));
+            CommandBindings.Add(new CommandBinding(cmdToggleDevMode, (o, e) => ToggleDevMode()));
 
             DependencyPropertyDescriptor.FromProperty(SearchTextProperty, typeof(MainWindow)).AddValueChanged(DataContext, (s, e) => TriggerNameSearch());
         }
@@ -231,7 +285,14 @@ namespace LarkatorGUI
             }
             catch (InvalidDeploymentException)
             {
+#if DEBUG
                 return DEV_STRING;
+#else
+                // Version aus der Assembly lesen für Release-Builds
+                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                var version = assembly.GetName().Version;
+                return version.ToString();
+#endif
             }
         }
 
@@ -242,6 +303,12 @@ namespace LarkatorGUI
                 fileWatcher.EnableRaisingEvents = false;
                 fileWatcher.Dispose();
             }
+
+            if (!AutoReload)
+                return;
+
+            if (SftpConfig.UseSftp)
+                return; // No file watcher for SFTP
 
             fileWatcher = new FileSystemWatcher(Path.GetDirectoryName(Properties.Settings.Default.SaveFile));
             fileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size | NotifyFilters.CreationTime;
@@ -260,8 +327,20 @@ namespace LarkatorGUI
 
         private void DiscoverCalibration()
         {
-            var filename = Properties.Settings.Default.SaveFile;
-            filename = Path.GetFileNameWithoutExtension(filename);
+            // Bestimme den zu verwendenden Dateinamen basierend auf Lokal- oder Remote-Pfad
+            string filename;
+            
+            if (SftpConfig.UseSftp && !string.IsNullOrEmpty(SftpConfig.RemotePath))
+            {
+                // Bei SFTP den Remote-Pfad verwenden
+                filename = Path.GetFileNameWithoutExtension(SftpConfig.RemotePath);
+            }
+            else
+            {
+                // Bei lokaler Datei den Standard-Pfad verwenden
+                filename = Path.GetFileNameWithoutExtension(Properties.Settings.Default.SaveFile);
+            }
+            
             var best = mapCalibrations.FirstOrDefault(cal => filename.StartsWith(cal.Filename));
             if (best == null)
             {
@@ -323,7 +402,13 @@ namespace LarkatorGUI
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            // First load species data
             await UpdateArkToolsData();
+            
+            // Load profiles before first reading of the ARK file
+            SftpProfileManager.Instance.LoadProfiles();
+            
+            // Now read the ARK file (only once)
             await ReReadArk();
         }
 
@@ -642,10 +727,68 @@ namespace LarkatorGUI
             return ((xOffset, 1 / xMult, xCorr), (yOffset, 1 / yMult, yCorr));
         }
 
+        private void LoadSavedSearches()
+        {
+            if (!String.IsNullOrWhiteSpace(Properties.Settings.Default.SavedSearches))
+            {
+                Collection<SearchCriteria> searches;
+                try
+                {
+                    searches = JsonConvert.DeserializeObject<Collection<SearchCriteria>>(Properties.Settings.Default.SavedSearches);
+                    
+                    // Zeilenumbrüche aus Speziesnamen entfernen
+                    foreach (var search in searches)
+                    {
+                        if (!string.IsNullOrEmpty(search.Species))
+                        {
+                            // Entferne alle Arten von Zeilenumbrüchen und trimme Leerzeichen
+                            search.Species = search.Species.Replace("\r\n", " ")
+                                                .Replace("\n", " ")
+                                                .Replace("\r", " ")
+                                                .Replace("\t", " "); // Tabs ersetzen
+                            
+                            // Mehrfache Leerzeichen durch ein einzelnes ersetzen (wiederhole bis keine Änderungen mehr)
+                            string previous;
+                            do {
+                                previous = search.Species;
+                                search.Species = search.Species.Replace("  ", " ");
+                            } while (previous != search.Species);
+                            
+                            search.Species = search.Species.Trim();
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Exception reading saved searches: " + e.ToString());
+                    return;
+                }
+
+                ListSearches.Clear();
+                foreach (var search in searches)
+                    ListSearches.Add(search);
+            }
+        }
+
         private void SaveSearch_Click(object sender, RoutedEventArgs e)
         {
             if (String.IsNullOrWhiteSpace(NewSearch.Species))
                 return;
+
+            // Reinigen des Artennamens von Zeilenumbrüchen
+            NewSearch.Species = NewSearch.Species.Replace("\r\n", " ")
+                                .Replace("\n", " ")
+                                .Replace("\r", " ")
+                                .Replace("\t", " "); // Tabs ersetzen
+            
+            // Mehrfache Leerzeichen durch ein einzelnes ersetzen (wiederhole bis keine Änderungen mehr)
+            string previous;
+            do {
+                previous = NewSearch.Species;
+                NewSearch.Species = NewSearch.Species.Replace("  ", " ");
+            } while (previous != NewSearch.Species);
+            
+            NewSearch.Species = NewSearch.Species.Trim();
 
             List<String> NewSearchList = new List<String>(AllSpecies.Where(species => species.Contains(NewSearch.Species)));
             SearchCriteria tempSearch;
@@ -695,7 +838,25 @@ namespace LarkatorGUI
                         if (tempListSearch.Count == 0 || tempListSearch.Where(dino => dino.Species == newDino).Count() == 0)
                         {
                             tempSearch = new SearchCriteria(NewSearch);
-                            tempSearch.Species = newDino;
+                            // Reinigen des gefundenen Artennamens
+                            string cleanedSpecies = newDino;
+                            if (!string.IsNullOrEmpty(cleanedSpecies))
+                            {
+                                cleanedSpecies = cleanedSpecies.Replace("\r\n", " ")
+                                            .Replace("\n", " ")
+                                            .Replace("\r", " ")
+                                            .Replace("\t", " "); // Tabs ersetzen
+                                
+                                // Mehrfache Leerzeichen durch ein einzelnes ersetzen (wiederhole bis keine Änderungen mehr)
+                                string previous2;
+                                do {
+                                    previous2 = cleanedSpecies;
+                                    cleanedSpecies = cleanedSpecies.Replace("  ", " ");
+                                } while (previous2 != cleanedSpecies);
+                                
+                                cleanedSpecies = cleanedSpecies.Trim();
+                            }
+                            tempSearch.Species = cleanedSpecies;
                             tempSearch.Order = order;
                             tempSearch.GroupSearch = NewSearch.GroupSearch;
                             ListSearches.Add(tempSearch);
@@ -752,6 +913,10 @@ namespace LarkatorGUI
 
         private async void Refresh_Click(object sender, MouseButtonEventArgs e)
         {
+            // Update the map image first
+            DiscoverCalibration();
+            
+            // Then reload the ARK data
             await ReReadArk();
         }
 
@@ -877,32 +1042,14 @@ namespace LarkatorGUI
             }
         }
 
-        private void LoadSavedSearches()
-        {
-            if (!String.IsNullOrWhiteSpace(Properties.Settings.Default.SavedSearches))
-            {
-                Collection<SearchCriteria> searches;
-                try
-                {
-                    searches = JsonConvert.DeserializeObject<Collection<SearchCriteria>>(Properties.Settings.Default.SavedSearches);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Exception reading saved searches: " + e.ToString());
-                    return;
-                }
-
-                ListSearches.Clear();
-                foreach (var search in searches)
-                    ListSearches.Add(search);
-            }
-        }
-
         private async Task ReReadArk()
         {
             if (IsLoading)
                 return;
 
+            // Always update the map image first to ensure it's current
+            DiscoverCalibration();
+            
             lastArk = Properties.Settings.Default.SaveFile;
             await PerformConversion();
 
@@ -952,9 +1099,49 @@ namespace LarkatorGUI
             IsLoading = true;
             try
             {
-                StatusDetailText = "...converting";
-                StatusText = "Processing saved ARK";
-                await arkReader.PerformConversion(Properties.Settings.Default.SaveFile);
+                // Stelle sicher, dass die SFTP-Konfiguration aktuell ist
+                LoadSftpSettings();
+                
+                // Prüfe SFTP Status und Validität
+                bool useSftp = SftpConfig.UseSftp;
+                bool sftpValid = SftpConfig.IsValid();
+                
+                System.Diagnostics.Debug.WriteLine($"SFTP Status: UseSftp={useSftp}, IsValid={sftpValid}");
+                
+                if (useSftp)
+                {
+                    StatusText = "Processing saved ARK via SFTP";
+                    StatusDetailText = "...connecting to SFTP server";
+                    
+                    // Debugging-Ausgabe
+                    System.Diagnostics.Debug.WriteLine($"Using SFTP with server: {SftpConfig.Host}, UsePrivateKey={SftpConfig.UsePrivateKey}");
+                    
+                    // Erzwinge UI-Update vor SFTP-Verbindung
+                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
+                    await Task.Delay(200); // Längeres Delay für zuverlässigeres UI-Update
+                    
+                    try 
+                    {
+                        await PerformSftpConversion();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Bei SFTP-Fehler zeigen wir die Meldung an und brechen ab
+                        StatusText = "SFTP connection failed";
+                        StatusDetailText = ex.Message;
+                        MessageBox.Show($"SFTP Error: {ex.Message}\n\nPlease check your connection settings.", 
+                            "SFTP Connection Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        IsLoading = false;
+                        return;
+                    }
+                }
+                else
+                {
+                    StatusDetailText = "...loading savegame";
+                    StatusText = "Processing saved ARK";
+                    await arkReader.PerformConversion(Properties.Settings.Default.SaveFile);
+                }
+                
                 StatusText = "ARK processing completed";
                 StatusDetailText = $"{arkReader.NumberOfWildSpecies} wild and {arkReader.NumberOfTamedSpecies} tame species located";
             }
@@ -967,6 +1154,132 @@ namespace LarkatorGUI
             finally
             {
                 IsLoading = false;
+            }
+        }
+
+        private void LoadSftpSettings()
+        {
+            SftpConfig.Host = Properties.Settings.Default.SftpHost;
+            SftpConfig.Port = Properties.Settings.Default.SftpPort;
+            SftpConfig.Username = Properties.Settings.Default.SftpUsername;
+            SftpConfig.Password = Properties.Settings.Default.SftpPassword;
+            SftpConfig.RemotePath = Properties.Settings.Default.SftpRemotePath;
+            SftpConfig.UseSftp = Properties.Settings.Default.UseSftp;
+            SftpConfig.UsePrivateKey = Properties.Settings.Default.UsePrivateKey;
+            SftpConfig.PrivateKeyPath = Properties.Settings.Default.PrivateKeyPath;
+            SftpConfig.PrivateKeyPassphrase = Properties.Settings.Default.PrivateKeyPassphrase;
+            
+            // Force property notification to update UI
+            OnPropertyChanged(nameof(SftpConfig));
+            
+            // Debugging-Ausgabe für SFTP-Einstellungen
+            System.Diagnostics.Debug.WriteLine($"SFTP Settings loaded: UseSftp={SftpConfig.UseSftp}, UsePrivateKey={SftpConfig.UsePrivateKey}, PrivateKeyPath={SftpConfig.PrivateKeyPath}");
+
+            // Subscribe to profile changes
+            SftpProfileManager.ProfileChanged -= SftpProfileManager_ProfileChanged; // Vermeide doppelte Registrierung
+            SftpProfileManager.ProfileChanged += SftpProfileManager_ProfileChanged;
+        }
+
+        private async Task PerformSftpConversion()
+        {
+            try
+            {
+                // Die "connecting" Meldung wird jetzt bereits vorher gesetzt
+                // Wir brauchen hier keinen erneuten Status
+                
+                // Setup SFTP client
+                SftpClient client;
+                
+                System.Diagnostics.Debug.WriteLine($"Preparing SFTP client: Host={SftpConfig.Host}, UsePrivateKey={SftpConfig.UsePrivateKey}, PrivateKeyPath={SftpConfig.PrivateKeyPath}");
+                
+                if (SftpConfig.UsePrivateKey && !string.IsNullOrWhiteSpace(SftpConfig.PrivateKeyPath))
+                {
+                    try
+                    {
+                        System.Diagnostics.Debug.WriteLine("Attempting private key authentication");
+                        // Use private key authentication
+                        var privateKeyFile = string.IsNullOrEmpty(SftpConfig.PrivateKeyPassphrase)
+                            ? new PrivateKeyFile(SftpConfig.PrivateKeyPath)
+                            : new PrivateKeyFile(SftpConfig.PrivateKeyPath, SftpConfig.PrivateKeyPassphrase);
+                            
+                        var keyFiles = new[] { privateKeyFile };
+                        client = new SftpClient(SftpConfig.Host, SftpConfig.Port, SftpConfig.Username, keyFiles);
+                        System.Diagnostics.Debug.WriteLine("Private key authentication setup complete");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log the error and fallback to password authentication
+                        System.Diagnostics.Debug.WriteLine($"Private key authentication failed: {ex.Message}");
+                        System.Diagnostics.Debug.WriteLine("Falling back to password authentication");
+                        client = new SftpClient(SftpConfig.Host, SftpConfig.Port, SftpConfig.Username, SftpConfig.Password);
+                    }
+                }
+                else
+                {
+                    // Use password authentication
+                    System.Diagnostics.Debug.WriteLine("Using password authentication");
+                    client = new SftpClient(SftpConfig.Host, SftpConfig.Port, SftpConfig.Username, SftpConfig.Password);
+                }
+                
+                using (client)
+                {
+                    System.Diagnostics.Debug.WriteLine("Connecting to SFTP server...");
+                    client.Connect();
+                    
+                    if (!client.IsConnected)
+                    {
+                        throw new Exception("Failed to connect to SFTP server");
+                    }
+                    
+                    System.Diagnostics.Debug.WriteLine("Connected to SFTP server successfully");
+                    
+                    StatusDetailText = "...downloading savegame";
+                    // UI aktualisieren vor dem Download
+                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
+                    await Task.Delay(100); // Kurzes Delay für UI-Update
+                    
+                    // Create temporary file
+                    string tempFile = Path.Combine(Path.GetTempPath(), Path.GetFileName(SftpConfig.RemotePath));
+                    
+                    System.Diagnostics.Debug.WriteLine($"Downloading {SftpConfig.RemotePath} to {tempFile}");
+                    
+                    // Download the file
+                    using (var fileStream = File.Create(tempFile))
+                    {
+                        client.DownloadFile(SftpConfig.RemotePath, fileStream);
+                    }
+                    
+                    System.Diagnostics.Debug.WriteLine("Download complete");
+                    
+                    // Process the file
+                    StatusDetailText = "...processing savegame";
+                    // UI aktualisieren vor der Verarbeitung
+                    await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
+                    await Task.Delay(100); // Kurzes Delay für UI-Update
+                    
+                    System.Diagnostics.Debug.WriteLine("Processing downloaded file");
+                    await arkReader.PerformConversion(tempFile);
+                    System.Diagnostics.Debug.WriteLine("Processing complete");
+                    
+                    // Cleanup
+                    try
+                    {
+                        File.Delete(tempFile);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log but ignore cleanup errors
+                        System.Diagnostics.Debug.WriteLine($"Cleanup error (non-critical): {ex.Message}");
+                    }
+                    
+                    client.Disconnect();
+                    System.Diagnostics.Debug.WriteLine("Disconnected from SFTP server");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"SFTP Error: {ex.Message}");
+                throw new Exception($"SFTP Error: {ex.Message}", ex);
             }
         }
 
@@ -1069,11 +1382,21 @@ namespace LarkatorGUI
         private void OnSettingsChanged()
         {
             DiscoverCalibration();
+            
+            // Update SFTP settings
+            LoadSftpSettings();
+            
+            // Update auto reload setting
+            AutoReload = Properties.Settings.Default.AutoReload;
+            
             CheckIfArkChanged();
             UpdateCurrentSearch();
 
             ForceFontSizeUpdate();
             reloadTimer.Interval = TimeSpan.FromMilliseconds(Properties.Settings.Default.ConvertDelay);
+            
+            // Update file watcher based on AutoReload setting
+            SetupFileWatcher();
         }
 
         private async void CheckIfArkChanged()
@@ -1147,6 +1470,44 @@ namespace LarkatorGUI
         private void window_MouseDown(object sender, MouseButtonEventArgs e)
         {
             Keyboard.ClearFocus();
+        }
+
+        private async void SftpProfileManager_ProfileChanged(object sender, EventArgs e)
+        {
+            // Reload settings from the newly selected profile
+            LoadSftpSettings();
+            
+            // Update the map image based on the new profile
+            DiscoverCalibration();
+            
+            // If SFTP is enabled, refresh the data
+            if (SftpConfig.UseSftp && SftpConfig.IsValid())
+            {
+                await ReReadArk();
+            }
+        }
+
+        private void ServerProfiles_Click(object sender, MouseButtonEventArgs e)
+        {
+            var window = new ServerProfilesWindow();
+            window.Owner = this;
+            window.ShowDialog();
+        }
+
+        // Add the OnPropertyChanged method to notify bindings
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+        
+        // Add PropertyChanged event
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private void ToggleDevMode()
+        {
+            // Toggle developer mode on/off
+            IsDevMode = !IsDevMode;
+            StatusText = IsDevMode ? "Developer mode enabled" : "Developer mode disabled";
         }
     }
 }

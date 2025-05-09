@@ -8,10 +8,39 @@ namespace LarkatorGUI
     public partial class SettingsWindow : Window
     {
         private SettingsWindowModel Model { get { return Resources["Model"] as SettingsWindowModel; } }
+        
+        // Property to display the current profile name
+        public string CurrentProfileName 
+        {
+            get 
+            {
+                var profileManager = SftpProfileManager.Instance;
+                if (profileManager.SelectedProfile != null)
+                {
+                    return profileManager.SelectedProfile.Name;
+                }
+                return "None";
+            }
+        }
 
         public SettingsWindow()
         {
             InitializeComponent();
+            
+            // Set window to update when activated
+            this.Activated += SettingsWindow_Activated;
+        }
+        
+        private void SettingsWindow_Activated(object sender, System.EventArgs e)
+        {
+            // Update the current profile display
+            UpdateCurrentProfileDisplay();
+        }
+        
+        private void UpdateCurrentProfileDisplay()
+        {
+            // Force a refresh of the current profile display
+            CurrentProfileTextBlock.GetBindingExpression(System.Windows.Controls.TextBlock.TextProperty)?.UpdateTarget();
         }
 
         private void Apply_Click(object sender, RoutedEventArgs e)
@@ -37,6 +66,16 @@ namespace LarkatorGUI
         {
             Model.Settings.OutputDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), Properties.Resources.ProgramName);
         }
+
+        private void ManageServerProfiles_Click(object sender, RoutedEventArgs e)
+        {
+            var window = new ServerProfilesWindow();
+            window.Owner = this;
+            window.ShowDialog();
+            
+            // Update current profile display after profile manager closes
+            UpdateCurrentProfileDisplay();
+        }
     }
 
     public class SettingsWindowModel : DependencyObject
@@ -45,7 +84,7 @@ namespace LarkatorGUI
 
         public SettingsWindowModel()
         {
-            Settings = new Properties.Settings();
+            Settings = Properties.Settings.Default;
         }
     }
 }

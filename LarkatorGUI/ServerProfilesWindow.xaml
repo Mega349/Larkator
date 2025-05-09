@@ -1,0 +1,92 @@
+<Window x:Class="LarkatorGUI.ServerProfilesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:LarkatorGUI"
+        xmlns:fa="http://schemas.fontawesome.io/icons/"
+        mc:Ignorable="d"
+        Title="Server Profiles" Height="450" Width="500" Background="{DynamicResource WindowBackgroundBrush}"
+        WindowStartupLocation="CenterOwner" ResizeMode="CanResize">
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="AntiqueWhite"/>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <TextBlock Grid.Row="0" Text="Server Profiles" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+        
+        <ListView x:Name="ProfilesListView" Grid.Row="1" Background="Transparent" BorderThickness="1" BorderBrush="#444444"
+                  ItemsSource="{Binding ProfileManager.Profiles}" SelectionMode="Single" 
+                  SelectionChanged="ProfilesListView_SelectionChanged">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Name" Width="150">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}" Foreground="AntiqueWhite"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="Host" Width="150">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Host}" Foreground="AntiqueWhite"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="Remote Path" Width="150">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding RemotePath}" Foreground="AntiqueWhite"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                </GridView>
+            </ListView.View>
+            <ListView.Resources>
+                <Style TargetType="GridViewColumnHeader">
+                    <Setter Property="Foreground" Value="AntiqueWhite"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                </Style>
+            </ListView.Resources>
+        </ListView>
+        
+        <Grid Grid.Row="2" Margin="0,15,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <Button x:Name="AddButton" Width="80" Height="30" Margin="0,0,10,0" Click="AddButton_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <fa:ImageAwesome Icon="Plus" Width="12" Height="12" Margin="0,0,5,0" Foreground="Black"/>
+                        <TextBlock Text="Add" Foreground="Black"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="EditButton" Width="80" Height="30" Margin="0,0,10,0" Click="EditButton_Click" IsEnabled="{Binding IsProfileSelected}">
+                    <StackPanel Orientation="Horizontal">
+                        <fa:ImageAwesome Icon="Edit" Width="12" Height="12" Margin="0,0,5,0" Foreground="Black"/>
+                        <TextBlock Text="Edit" Foreground="Black"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="DeleteButton" Width="80" Height="30" Click="DeleteButton_Click" IsEnabled="{Binding IsProfileSelected}">
+                    <StackPanel Orientation="Horizontal">
+                        <fa:ImageAwesome Icon="Trash" Width="12" Height="12" Margin="0,0,5,0" Foreground="Black"/>
+                        <TextBlock Text="Delete" Foreground="Black"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+            
+            <Button Grid.Column="1" x:Name="CloseButton" Content="Close" Width="80" Height="30" IsCancel="True" Click="CloseButton_Click"/>
+        </Grid>
+    </Grid>
+</Window> 

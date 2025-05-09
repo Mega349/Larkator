@@ -1,87 +1,140 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="LarkatorGUI.Properties" GeneratedClassName="Settings">
-  <Profiles />
-  <Settings>
-    <Setting Name="SaveFile" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
-    </Setting>
-    <Setting Name="ArkTools" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
-    </Setting>
-    <Setting Name="OutputDir" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
-    </Setting>
-    <Setting Name="MaxLevel" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">120</Value>
-    </Setting>
-    <Setting Name="LevelStep" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">4</Value>
-    </Setting>
-    <Setting Name="SavedSearches" Type="System.String" Scope="User">
-      <Value Profile="(Default)">[ { "Group": "Shopping List", "Order": 0.0, "Species": "Allosaurus", "MinLevel": 92, "MaxLevel": null, "Female": true }, { "Group": "Worries", "Order": 175.0, "Species": "Alpha Carnotaurus", "MinLevel": 100, "MaxLevel": null, "Female": null }, { "Group": "Worries", "Order": 50.0, "Species": "Alpha Leedsichthys", "MinLevel": null, "MaxLevel": null, "Female": null }, { "Group": "Worries", "Order": 125.0, "Species": "Alpha Megalodon", "MinLevel": 100, "MaxLevel": null, "Female": null }, { "Group": "Worries", "Order": 192.1875, "Species": "Alpha Mosasaur", "MinLevel": null, "MaxLevel": null, "Female": null }, { "Group": "Worries", "Order": 287.5, "Species": "Alpha Raptor", "MinLevel": 100, "MaxLevel": null, "Female": null }, { "Group": "Worries", "Order": 443.75, "Species": "Alpha T-Rex", "MinLevel": 100, "MaxLevel": null, "Female": null }, { "Group": "Worries", "Order": 521.875, "Species": "Giganotosaurus", "MinLevel": null, "MaxLevel": null, "Female": null }, { "Group": "Worries", "Order": 610.9375, "Species": "Titanosaur", "MinLevel": null, "MaxLevel": null, "Female": null }, { "Group": "Shopping List", "Order": 87.5, "Species": "Baryonyx", "MinLevel": 100, "MaxLevel": null, "Female": null }, { "Group": "Shopping List", "Order": 200.0, "Species": "Dire Bear", "MinLevel": 100, "MaxLevel": null, "Female": null }, { "Group": "Worries", "Order": 292.1875, "Species": "Diseased Leech", "MinLevel": null, "MaxLevel": null, "Female": null }, { "Group": "Shopping List", "Order": 300.0, "Species": "Quetzal", "MinLevel": null, "MaxLevel": null, "Female": null }, { "Group": "Shopping List", "Order": 419.921875, "Species": "Rex", "MinLevel": 100, "MaxLevel": null, "Female": null }, { "Group": "Shopping List", "Order": 510.9375, "Species": "Yutyrannus", "MinLevel": 84, "MaxLevel": null, "Female": null } ]</Value>
-    </Setting>
-    <Setting Name="MainWindowLeft" Type="System.Double" Scope="User">
-      <Value Profile="(Default)">-10000</Value>
-    </Setting>
-    <Setting Name="MainWindowTop" Type="System.Double" Scope="User">
-      <Value Profile="(Default)">-10000</Value>
-    </Setting>
-    <Setting Name="MainWindowWidth" Type="System.Double" Scope="User">
-      <Value Profile="(Default)">1252</Value>
-    </Setting>
-    <Setting Name="MainWindowHeight" Type="System.Double" Scope="User">
-      <Value Profile="(Default)">700</Value>
-    </Setting>
-    <Setting Name="ConvertDelay" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">2000</Value>
-    </Setting>
-    <Setting Name="ListFontSize" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">14</Value>
-    </Setting>
-    <Setting Name="PinScale" Type="System.Double" Scope="User">
-      <Value Profile="(Default)">0.9</Value>
-    </Setting>
-    <Setting Name="TeleportHeightOffset" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">1500</Value>
-    </Setting>
-    <Setting Name="TeleportFly" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
-    </Setting>
-    <Setting Name="TeleportGhost" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
-    </Setting>
-    <Setting Name="ShowHealth" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
-    </Setting>
-    <Setting Name="ShowStam" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
-    </Setting>
-    <Setting Name="ShowOxygen" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
-    </Setting>
-    <Setting Name="ShowFood" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
-    </Setting>
-    <Setting Name="ShowWeight" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
-    </Setting>
-    <Setting Name="ShowMelee" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
-    </Setting>
-    <Setting Name="ShowSpeed" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
-    </Setting>
-    <Setting Name="LastGroup" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Shopping List</Value>
-    </Setting>
-    <Setting Name="HideUntameable" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
-    </Setting>
-    <Setting Name="GroupSearch" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
-    </Setting>
-    <Setting Name="ShowForceReload" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
-    </Setting>
-  </Settings>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)"
+              GeneratedClassNamespace="LarkatorGUI.Properties" GeneratedClassName="Settings">
+    <Profiles/>
+    <Settings>
+        <Setting Name="SaveFile" Type="System.String" Scope="User">
+            <Value Profile="(Default)"/>
+        </Setting>
+        <Setting Name="ArkTools" Type="System.String" Scope="User">
+            <Value Profile="(Default)"/>
+        </Setting>
+        <Setting Name="OutputDir" Type="System.String" Scope="User">
+            <Value Profile="(Default)"/>
+        </Setting>
+        <Setting Name="MaxLevel" Type="System.Int32" Scope="User">
+            <Value Profile="(Default)">120</Value>
+        </Setting>
+        <Setting Name="LevelStep" Type="System.Int32" Scope="User">
+            <Value Profile="(Default)">4</Value>
+        </Setting>
+        <Setting Name="SavedSearches" Type="System.String" Scope="User">
+            <Value Profile="(Default)">[ { "Group": "Shopping List", "Order": 0.0, "Species": "Allosaurus", "MinLevel":
+                92, "MaxLevel": null, "Female": true }, { "Group": "Worries", "Order": 175.0, "Species": "Alpha
+                Carnotaurus", "MinLevel": 100, "MaxLevel": null, "Female": null }, { "Group": "Worries", "Order": 50.0,
+                "Species": "Alpha Leedsichthys", "MinLevel": null, "MaxLevel": null, "Female": null }, { "Group":
+                "Worries", "Order": 125.0, "Species": "Alpha Megalodon", "MinLevel": 100, "MaxLevel": null, "Female":
+                null }, { "Group": "Worries", "Order": 192.1875, "Species": "Alpha Mosasaur", "MinLevel": null,
+                "MaxLevel": null, "Female": null }, { "Group": "Worries", "Order": 287.5, "Species": "Alpha Raptor",
+                "MinLevel": 100, "MaxLevel": null, "Female": null }, { "Group": "Worries", "Order": 443.75, "Species":
+                "Alpha T-Rex", "MinLevel": 100, "MaxLevel": null, "Female": null }, { "Group": "Worries", "Order":
+                521.875, "Species": "Giganotosaurus", "MinLevel": null, "MaxLevel": null, "Female": null }, { "Group":
+                "Worries", "Order": 610.9375, "Species": "Titanosaur", "MinLevel": null, "MaxLevel": null, "Female":
+                null }, { "Group": "Shopping List", "Order": 87.5, "Species": "Baryonyx", "MinLevel": 100, "MaxLevel":
+                null, "Female": null }, { "Group": "Shopping List", "Order": 200.0, "Species": "Dire Bear", "MinLevel":
+                100, "MaxLevel": null, "Female": null }, { "Group": "Worries", "Order": 292.1875, "Species": "Diseased
+                Leech", "MinLevel": null, "MaxLevel": null, "Female": null }, { "Group": "Shopping List", "Order":
+                300.0, "Species": "Quetzal", "MinLevel": null, "MaxLevel": null, "Female": null }, { "Group": "Shopping
+                List", "Order": 419.921875, "Species": "Rex", "MinLevel": 100, "MaxLevel": null, "Female": null }, {
+                "Group": "Shopping List", "Order": 510.9375, "Species": "Yutyrannus", "MinLevel": 84, "MaxLevel": null,
+                "Female": null } ]
+            </Value>
+        </Setting>
+        <Setting Name="MainWindowLeft" Type="System.Double" Scope="User">
+            <Value Profile="(Default)">-10000</Value>
+        </Setting>
+        <Setting Name="MainWindowTop" Type="System.Double" Scope="User">
+            <Value Profile="(Default)">-10000</Value>
+        </Setting>
+        <Setting Name="MainWindowWidth" Type="System.Double" Scope="User">
+            <Value Profile="(Default)">1252</Value>
+        </Setting>
+        <Setting Name="MainWindowHeight" Type="System.Double" Scope="User">
+            <Value Profile="(Default)">700</Value>
+        </Setting>
+        <Setting Name="ConvertDelay" Type="System.Int32" Scope="User">
+            <Value Profile="(Default)">2000</Value>
+        </Setting>
+        <Setting Name="ListFontSize" Type="System.Int32" Scope="User">
+            <Value Profile="(Default)">14</Value>
+        </Setting>
+        <Setting Name="PinScale" Type="System.Double" Scope="User">
+            <Value Profile="(Default)">0.9</Value>
+        </Setting>
+        <Setting Name="TeleportHeightOffset" Type="System.Int32" Scope="User">
+            <Value Profile="(Default)">1500</Value>
+        </Setting>
+        <Setting Name="TeleportFly" Type="System.Boolean" Scope="User">
+            <Value Profile="(Default)">True</Value>
+        </Setting>
+        <Setting Name="TeleportGhost" Type="System.Boolean" Scope="User">
+            <Value Profile="(Default)">False</Value>
+        </Setting>
+        <Setting Name="ShowHealth" Type="System.Boolean" Scope="User">
+            <Value Profile="(Default)">True</Value>
+        </Setting>
+        <Setting Name="ShowStam" Type="System.Boolean" Scope="User">
+            <Value Profile="(Default)">True</Value>
+        </Setting>
+        <Setting Name="ShowOxygen" Type="System.Boolean" Scope="User">
+            <Value Profile="(Default)">False</Value>
+        </Setting>
+        <Setting Name="ShowFood" Type="System.Boolean" Scope="User">
+            <Value Profile="(Default)">False</Value>
+        </Setting>
+        <Setting Name="ShowWeight" Type="System.Boolean" Scope="User">
+            <Value Profile="(Default)">True</Value>
+        </Setting>
+        <Setting Name="ShowMelee" Type="System.Boolean" Scope="User">
+            <Value Profile="(Default)">True</Value>
+        </Setting>
+        <Setting Name="ShowSpeed" Type="System.Boolean" Scope="User">
+            <Value Profile="(Default)">True</Value>
+        </Setting>
+        <Setting Name="LastGroup" Type="System.String" Scope="User">
+            <Value Profile="(Default)">Shopping List</Value>
+        </Setting>
+        <Setting Name="HideUntameable" Type="System.Boolean" Scope="User">
+            <Value Profile="(Default)">False</Value>
+        </Setting>
+        <Setting Name="GroupSearch" Type="System.Boolean" Scope="User">
+            <Value Profile="(Default)">False</Value>
+        </Setting>
+        <Setting Name="UseSftp" Type="System.Boolean" Scope="User">
+            <Value Profile="(Default)">False</Value>
+        </Setting>
+        <Setting Name="SftpHost" Type="System.String" Scope="User">
+            <Value Profile="(Default)"/>
+        </Setting>
+        <Setting Name="SftpPort" Type="System.Int32" Scope="User">
+            <Value Profile="(Default)">22</Value>
+        </Setting>
+        <Setting Name="SftpUsername" Type="System.String" Scope="User">
+            <Value Profile="(Default)"/>
+        </Setting>
+        <Setting Name="SftpPassword" Type="System.String" Scope="User">
+            <Value Profile="(Default)"/>
+        </Setting>
+        <Setting Name="SftpRemotePath" Type="System.String" Scope="User">
+            <Value Profile="(Default)"/>
+        </Setting>
+        <Setting Name="AutoReload" Type="System.Boolean" Scope="User">
+            <Value Profile="(Default)">False</Value>
+        </Setting>
+        <Setting Name="UsePrivateKey" Type="System.Boolean" Scope="User">
+            <Value Profile="(Default)">False</Value>
+        </Setting>
+        <Setting Name="PrivateKeyPath" Type="System.String" Scope="User">
+            <Value Profile="(Default)"/>
+        </Setting>
+        <Setting Name="PrivateKeyPassphrase" Type="System.String" Scope="User">
+            <Value Profile="(Default)"/>
+        </Setting>
+        <Setting Name="SftpServerProfiles" Type="System.String" Scope="User">
+            <Value Profile="(Default)">[]</Value>
+        </Setting>
+        <Setting Name="SelectedServerProfile" Type="System.String" Scope="User">
+            <Value Profile="(Default)"/>
+        </Setting>
+    </Settings>
 </SettingsFile>
