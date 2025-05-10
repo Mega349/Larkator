@@ -27,6 +27,7 @@
                 UpdateSourceTrigger=PropertyChanged}"
             HorizontalAlignment="Stretch"
             HorizontalContentAlignment="Right"
-            VerticalContentAlignment="Center" />
+            VerticalContentAlignment="Center"
+            LostFocus="TextBox_LostFocus" />
     </DockPanel>
 </UserControl>

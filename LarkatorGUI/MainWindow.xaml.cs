@@ -1159,8 +1159,20 @@ namespace LarkatorGUI
 
         private void LoadSftpSettings()
         {
+            // Debug-Ausgabe vor dem Laden
+            System.Diagnostics.Debug.WriteLine($"LoadSftpSettings - SftpPort in Settings: {Properties.Settings.Default.SftpPort}");
+
             SftpConfig.Host = Properties.Settings.Default.SftpHost;
-            SftpConfig.Port = Properties.Settings.Default.SftpPort;
+            
+            // Stelle sicher, dass ein gültiger Port verwendet wird
+            int port = Properties.Settings.Default.SftpPort;
+            if (port <= 0 || port > 65535)
+            {
+                port = 22; // Standard-Port, falls ungültig
+                System.Diagnostics.Debug.WriteLine($"LoadSftpSettings - Korrigiere ungültigen Port zu Standard-Port 22");
+            }
+            SftpConfig.Port = port;
+            
             SftpConfig.Username = Properties.Settings.Default.SftpUsername;
             SftpConfig.Password = Properties.Settings.Default.SftpPassword;
             SftpConfig.RemotePath = Properties.Settings.Default.SftpRemotePath;
@@ -1173,7 +1185,7 @@ namespace LarkatorGUI
             OnPropertyChanged(nameof(SftpConfig));
             
             // Debugging-Ausgabe für SFTP-Einstellungen
-            System.Diagnostics.Debug.WriteLine($"SFTP Settings loaded: UseSftp={SftpConfig.UseSftp}, UsePrivateKey={SftpConfig.UsePrivateKey}, PrivateKeyPath={SftpConfig.PrivateKeyPath}");
+            System.Diagnostics.Debug.WriteLine($"SFTP Settings loaded: UseSftp={SftpConfig.UseSftp}, Port={SftpConfig.Port}, UsePrivateKey={SftpConfig.UsePrivateKey}");
 
             // Subscribe to profile changes
             SftpProfileManager.ProfileChanged -= SftpProfileManager_ProfileChanged; // Vermeide doppelte Registrierung
@@ -1203,6 +1215,7 @@ namespace LarkatorGUI
                             : new PrivateKeyFile(SftpConfig.PrivateKeyPath, SftpConfig.PrivateKeyPassphrase);
                             
                         var keyFiles = new[] { privateKeyFile };
+                        System.Diagnostics.Debug.WriteLine($"Creating SFTP client with Port: {SftpConfig.Port}");
                         client = new SftpClient(SftpConfig.Host, SftpConfig.Port, SftpConfig.Username, keyFiles);
                         System.Diagnostics.Debug.WriteLine("Private key authentication setup complete");
                     }
@@ -1211,6 +1224,7 @@ namespace LarkatorGUI
                         // Log the error and fallback to password authentication
                         System.Diagnostics.Debug.WriteLine($"Private key authentication failed: {ex.Message}");
                         System.Diagnostics.Debug.WriteLine("Falling back to password authentication");
+                        System.Diagnostics.Debug.WriteLine($"Creating SFTP client with Port: {SftpConfig.Port}");
                         client = new SftpClient(SftpConfig.Host, SftpConfig.Port, SftpConfig.Username, SftpConfig.Password);
                     }
                 }
@@ -1218,6 +1232,7 @@ namespace LarkatorGUI
                 {
                     // Use password authentication
                     System.Diagnostics.Debug.WriteLine("Using password authentication");
+                    System.Diagnostics.Debug.WriteLine($"Creating SFTP client with Port: {SftpConfig.Port}");
                     client = new SftpClient(SftpConfig.Host, SftpConfig.Port, SftpConfig.Username, SftpConfig.Password);
                 }
                 
@@ -1474,8 +1489,15 @@ namespace LarkatorGUI
 
         private async void SftpProfileManager_ProfileChanged(object sender, EventArgs e)
         {
+            // Debug-Ausgabe vor dem Laden der Einstellungen
+            var selectedProfile = SftpProfileManager.Instance.SelectedProfile;
+            System.Diagnostics.Debug.WriteLine($"ProfileChanged - Selektiertes Profil: {selectedProfile?.Name}, Port: {selectedProfile?.Port}");
+            
             // Reload settings from the newly selected profile
             LoadSftpSettings();
+            
+            // Debug-Ausgabe nach dem Laden der Einstellungen
+            System.Diagnostics.Debug.WriteLine($"ProfileChanged - Nach LoadSftpSettings, Port: {SftpConfig.Port}");
             
             // Update the map image based on the new profile
             DiscoverCalibration();
