@@ -169,6 +169,12 @@ namespace LarkatorGUI
             set { SetValue(AutoReloadProperty, value); }
         }
 
+        public DateTime LastSavegameModifiedDate
+        {
+            get { return (DateTime)GetValue(LastSavegameModifiedDateProperty); }
+            private set { SetValue(LastSavegameModifiedDateProperty, value); }
+        }
+
         public static readonly DependencyProperty IsDevModeProperty =
             DependencyProperty.Register("IsDevMode", typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
 
@@ -213,6 +219,9 @@ namespace LarkatorGUI
 
         public static readonly DependencyProperty AutoReloadProperty =
             DependencyProperty.Register("AutoReload", typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
+
+        public static readonly DependencyProperty LastSavegameModifiedDateProperty =
+            DependencyProperty.Register("LastSavegameModifiedDate", typeof(DateTime), typeof(MainWindow), new PropertyMetadata(DateTime.MinValue));
 
         ArkReader arkReader;
         FileSystemWatcher fileWatcher;
@@ -1247,6 +1256,23 @@ namespace LarkatorGUI
                     }
                     
                     System.Diagnostics.Debug.WriteLine("Connected to SFTP server successfully");
+                    
+                    // Hole das Änderungsdatum der Remote-Datei
+                    try
+                    {
+                        var fileAttrs = client.GetAttributes(SftpConfig.RemotePath);
+                        var lastModifiedDate = fileAttrs.LastWriteTime;
+                        
+                        // Setze eine Property für die UI-Anzeige
+                        LastSavegameModifiedDate = lastModifiedDate;
+                        
+                        System.Diagnostics.Debug.WriteLine($"Remote savegame last modified: {lastModifiedDate}");
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Could not get remote file information: {ex.Message}");
+                        // Wir setzen trotzdem mit dem Download fort
+                    }
                     
                     StatusDetailText = "...downloading savegame";
                     // UI aktualisieren vor dem Download
