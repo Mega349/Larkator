@@ -88,16 +88,28 @@ namespace LarkatorGUI
                 
                 try {
                     profilesJson = Properties.Settings.Default.SftpServerProfiles;
-                } catch {
+                    System.Diagnostics.Debug.WriteLine($"LoadProfiles - JSON aus Settings geladen, Länge: {profilesJson?.Length ?? 0}");
+                } catch (Exception ex) {
                     // Error handling falls Settings nicht gefunden wird
+                    System.Diagnostics.Debug.WriteLine($"LoadProfiles - Fehler beim Laden aus Settings: {ex.Message}");
                 }
                 
                 if (!string.IsNullOrWhiteSpace(profilesJson))
                 {
-                    var loadedProfiles = JsonConvert.DeserializeObject<List<SftpServerProfile>>(profilesJson);
+                    // Spezielle Serialisierungseinstellungen
+                    var settings = new JsonSerializerSettings 
+                    { 
+                        TypeNameHandling = TypeNameHandling.None
+                    };
+                    
+                    var loadedProfiles = JsonConvert.DeserializeObject<List<SftpServerProfile>>(profilesJson, settings);
+                    
+                    System.Diagnostics.Debug.WriteLine($"LoadProfiles - {loadedProfiles.Count} Profile geladen");
+                    
                     Profiles.Clear();
                     foreach (var profile in loadedProfiles)
                     {
+                        System.Diagnostics.Debug.WriteLine($"  - Profil: {profile.Name}, Port: {profile.Port}");
                         Profiles.Add(profile);
                     }
 
@@ -106,8 +118,9 @@ namespace LarkatorGUI
                     
                     try {
                         selectedProfileName = Properties.Settings.Default.SelectedServerProfile;
-                    } catch {
+                    } catch (Exception ex) {
                         // Error handling falls Settings nicht gefunden wird
+                        System.Diagnostics.Debug.WriteLine($"LoadProfiles - Fehler beim Laden des ausgewählten Profils: {ex.Message}");
                     }
                     
                     if (!string.IsNullOrWhiteSpace(selectedProfileName))
@@ -118,6 +131,9 @@ namespace LarkatorGUI
                             // Set selected profile directly to avoid triggering the reload on startup
                             _selectedProfile = profileToSelect;
                             OnPropertyChanged(nameof(SelectedProfile));
+                            
+                            System.Diagnostics.Debug.WriteLine($"LoadProfiles - Profil ausgewählt: {profileToSelect.Name}, Port: {profileToSelect.Port}");
+                            
                             // Don't apply settings here, they will be loaded elsewhere on startup
                         }
                     }
@@ -133,13 +149,35 @@ namespace LarkatorGUI
         {
             try
             {
-                var profilesJson = JsonConvert.SerializeObject(Profiles.ToList());
+                // Debug-Ausgabe vor dem Speichern
+                System.Diagnostics.Debug.WriteLine($"SaveProfiles - Speichere {Profiles.Count} Profile");
+                foreach (var profile in Profiles)
+                {
+                    System.Diagnostics.Debug.WriteLine($"  - Profil: {profile.Name}, Port: {profile.Port}");
+                }
+                
+                // Spezielle Serialisierungseinstellungen
+                var settings = new JsonSerializerSettings 
+                { 
+                    TypeNameHandling = TypeNameHandling.None,
+                    Formatting = Formatting.Indented
+                };
+                
+                var profilesJson = JsonConvert.SerializeObject(Profiles.ToList(), settings);
+                
+                // Debug-Ausgabe nach der Serialisierung
+                System.Diagnostics.Debug.WriteLine($"SaveProfiles - JSON erstellt, Länge: {profilesJson.Length}");
                 
                 try {
                     Properties.Settings.Default.SftpServerProfiles = profilesJson;
                     Properties.Settings.Default.Save();
-                } catch {
+                    
+                    // Debug-Ausgabe nach dem Speichern
+                    System.Diagnostics.Debug.WriteLine("SaveProfiles - Einstellungen erfolgreich gespeichert");
+                } catch (Exception ex) {
                     // Error handling falls Settings nicht gefunden wird
+                    System.Diagnostics.Debug.WriteLine($"SaveProfiles - Fehler beim Speichern in Settings: {ex.Message}");
+                    throw;
                 }
             }
             catch (Exception ex)
@@ -168,6 +206,10 @@ namespace LarkatorGUI
         {
             if (profile == null) return;
 
+            // Debug-Ausgabe vor dem Übernehmen der Einstellungen
+            System.Diagnostics.Debug.WriteLine($"ApplyProfileSettings - Profile: {profile.Name}, Profile Port: {profile.Port}");
+            System.Diagnostics.Debug.WriteLine($"ApplyProfileSettings - Current Settings Port: {Properties.Settings.Default.SftpPort}");
+
             Properties.Settings.Default.UseSftp = true;
             Properties.Settings.Default.SftpHost = profile.Host;
             Properties.Settings.Default.SftpPort = profile.Port;
@@ -177,7 +219,14 @@ namespace LarkatorGUI
             Properties.Settings.Default.UsePrivateKey = profile.UsePrivateKey;
             Properties.Settings.Default.PrivateKeyPath = profile.PrivateKeyPath;
             Properties.Settings.Default.PrivateKeyPassphrase = profile.PrivateKeyPassphrase;
+            
+            // Debug-Ausgabe vor dem Speichern
+            System.Diagnostics.Debug.WriteLine($"ApplyProfileSettings - Nach Zuweisungen, Settings Port: {Properties.Settings.Default.SftpPort}");
+            
             Properties.Settings.Default.Save();
+            
+            // Debug-Ausgabe nach dem Speichern
+            System.Diagnostics.Debug.WriteLine($"ApplyProfileSettings - Nach Speichern, Settings Port: {Properties.Settings.Default.SftpPort}");
         }
 
         public void AddProfile(SftpServerProfile profile)
@@ -208,13 +257,43 @@ namespace LarkatorGUI
 
         public void UpdateProfile(SftpServerProfile profile)
         {
+            if (profile == null) return;
+            
+            // Debug-Ausgabe für Port
+            System.Diagnostics.Debug.WriteLine($"UpdateProfile - Start mit Port: {profile.Port}");
+
             // Find the profile in the collection and update it
             var existingProfile = Profiles.FirstOrDefault(p => p.Name == profile.Name);
             if (existingProfile != null)
             {
+                // Debug-Ausgabe für Port
+                System.Diagnostics.Debug.WriteLine($"UpdateProfile - Gefundenes Profil mit Port: {existingProfile.Port}");
+                System.Diagnostics.Debug.WriteLine($"UpdateProfile - Zu aktualisieren auf Port: {profile.Port}");
+                
+                // Kopiere alle Eigenschaften
+                existingProfile.Host = profile.Host;
+                existingProfile.Port = profile.Port;  // Stelle sicher, dass der Port kopiert wird
+                existingProfile.Username = profile.Username;
+                existingProfile.Password = profile.Password;
+                existingProfile.RemotePath = profile.RemotePath;
+                existingProfile.UsePrivateKey = profile.UsePrivateKey;
+                existingProfile.PrivateKeyPath = profile.PrivateKeyPath;
+                existingProfile.PrivateKeyPassphrase = profile.PrivateKeyPassphrase;
+                
+                // Debug-Ausgabe nach Update
+                System.Diagnostics.Debug.WriteLine($"UpdateProfile - Nach Update, Port: {existingProfile.Port}");
+                
+                // Aktualisiere die UI
                 var index = Profiles.IndexOf(existingProfile);
-                Profiles[index] = profile;
+                Profiles[index] = existingProfile;
                 SaveProfiles();
+                
+                // Wenn dies das ausgewählte Profil ist, aktualisiere die Einstellungen
+                if (SelectedProfile == existingProfile)
+                {
+                    System.Diagnostics.Debug.WriteLine($"UpdateProfile - Aktualisiere Einstellungen für selektiertes Profil");
+                    ApplyProfileSettings(existingProfile);
+                }
             }
         }
 

@@ -48,8 +48,8 @@
             
             <!-- SFTP Port -->
             <TextBlock Grid.Row="2" Grid.Column="0" Text="SFTP Port:" VerticalAlignment="Center" Margin="0,0,10,10"/>
-            <local:NumericEntryControl Grid.Row="2" Grid.Column="1" Value="{Binding Port}" 
-                                     MaxValue="65535" MinValue="1" Increment="1" LargeIncrement="100" Margin="0,0,0,10"/>
+            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Port}" Margin="0,0,0,10" x:Name="PortTextBox"
+                   PreviewTextInput="PortTextBox_PreviewTextInput" LostFocus="PortTextBox_LostFocus"/>
             
             <!-- SFTP Username -->
             <TextBlock Grid.Row="3" Grid.Column="0" Text="SFTP Username:" VerticalAlignment="Center" Margin="0,0,10,10"/>

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Newtonsoft.Json;
 
 namespace LarkatorGUI
 {
@@ -45,11 +46,15 @@ namespace LarkatorGUI
             }
         }
 
+        [JsonProperty(TypeNameHandling = TypeNameHandling.None)]
         public int Port
         {
             get { return _port; }
             set
             {
+                // Debug-Ausgabe für Port
+                System.Diagnostics.Debug.WriteLine($"SftpServerProfile - Setting port to: {value}");
+                
                 if (_port != value)
                 {
                     _port = value;

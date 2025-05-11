@@ -13,7 +13,7 @@ namespace LarkatorGUI
     {
         public static readonly DependencyProperty ValueProperty = DependencyProperty.Register("Value",
             typeof(Int32), typeof(NumericEntryControl),
-            new PropertyMetadata(0));
+            new PropertyMetadata(0, OnValueChanged));
 
         public static readonly DependencyProperty MaxValueProperty = DependencyProperty.Register("MaxValue",
             typeof(Int32), typeof(NumericEntryControl),
@@ -38,6 +38,22 @@ namespace LarkatorGUI
 
         private bool _isIncrementing = false;
 
+        // Callback für Value-Property-Änderungen
+        private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (NumericEntryControl)d;
+            var newValue = (int)e.NewValue;
+            
+            // Debug-Ausgabe
+            System.Diagnostics.Debug.WriteLine($"NumericEntryControl - OnValueChanged: {e.OldValue} -> {newValue}");
+            
+            // Textbox aktualisieren
+            if (control._textbox != null)
+            {
+                control._textbox.Text = newValue.ToString();
+            }
+        }
+        
         public Int32 Value
         {
             get
@@ -46,6 +62,15 @@ namespace LarkatorGUI
             }
             set
             {
+                // Debug-Ausgabe für Value
+                System.Diagnostics.Debug.WriteLine($"NumericEntryControl - Setting value to: {value}");
+                
+                // Stelle sicher, dass der Wert im gültigen Bereich liegt
+                if (value < MinValue)
+                    value = MinValue;
+                if (value > MaxValue)
+                    value = MaxValue;
+                
                 SetValue(ValueProperty, value);
             }
         }
@@ -116,6 +141,12 @@ namespace LarkatorGUI
             _timer.Tick += new EventHandler(_timer_Tick);
         }
 
+        // Zusätzlicher Event-Handler für TextBox.LostFocus
+        private void TextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            UpdateValueFromTextBox();
+        }
+
         void buttonIncrement_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             buttonIncrement.CaptureMouse();
@@ -169,8 +200,14 @@ namespace LarkatorGUI
 
         void _textbox_LostFocus(object sender, RoutedEventArgs e)
         {
+            UpdateValueFromTextBox();
+        }
+
+        private void UpdateValueFromTextBox()
+        {
             if (Int32.TryParse(_textbox.Text, out int newValue))
             {
+                // Stelle sicher, dass der Wert im gültigen Bereich liegt
                 if (newValue > MaxValue)
                 {
                     newValue = MaxValue;
@@ -179,12 +216,18 @@ namespace LarkatorGUI
                 {
                     newValue = MinValue;
                 }
+                
+                // Setze den neuen Wert
+                Value = newValue;
+                
+                // Debug-Ausgabe
+                System.Diagnostics.Debug.WriteLine($"NumericEntryControl - UpdateValueFromTextBox: {newValue}");
             }
             else
             {
-                newValue = _previousValue;
+                // Wenn der Text kein gültiger numerischer Wert ist, setze den vorherigen Wert zurück
+                _textbox.Text = Value.ToString();
             }
-            _textbox.Text = newValue.ToString();
         }
 
         void _textbox_PreviewTextInput(object sender, TextCompositionEventArgs e)
@@ -223,6 +266,9 @@ namespace LarkatorGUI
                     break;
                 case Key.PageDown:
                     Value = Math.Max(Value - LargeIncrement, MinValue);
+                    break;
+                case Key.Enter:
+                    UpdateValueFromTextBox();
                     break;
                 default:
                     //do nothing

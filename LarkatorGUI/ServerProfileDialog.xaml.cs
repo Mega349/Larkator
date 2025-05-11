@@ -1,5 +1,7 @@
 using System;
+using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Input;
 using Microsoft.Win32;
 
 namespace LarkatorGUI
@@ -8,6 +10,7 @@ namespace LarkatorGUI
     {
         private readonly SftpServerProfile _profile;
         private readonly bool _isNewProfile;
+        private static readonly Regex _numericRegex = new Regex("[^0-9]+");
 
         public ServerProfileDialog(SftpServerProfile profile = null)
         {
@@ -15,6 +18,10 @@ namespace LarkatorGUI
 
             _isNewProfile = profile == null;
             _profile = profile ?? new SftpServerProfile();
+            
+            // Debug-Ausgabe für Port vor der Dialogdarstellung
+            System.Diagnostics.Debug.WriteLine($"ServerProfileDialog - Initialisierung mit Port: {_profile.Port}");
+            
             DataContext = _profile;
 
             // Set password box values
@@ -34,6 +41,9 @@ namespace LarkatorGUI
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
+            // Stellen Sie sicher, dass der Port aktualisiert wird
+            UpdatePortFromTextBox();
+            
             // Apply the changes
             ApplyButton_Click(sender, e);
             
@@ -75,6 +85,12 @@ namespace LarkatorGUI
 
         private void ApplyButton_Click(object sender, RoutedEventArgs e)
         {
+            // Stellen Sie sicher, dass der Port aktualisiert wird
+            UpdatePortFromTextBox();
+            
+            // Debug-Ausgabe für Port
+            System.Diagnostics.Debug.WriteLine($"ApplyButton_Click - Port: {_profile.Port}");
+            
             // Validate required fields
             if (string.IsNullOrWhiteSpace(_profile.Name))
             {
@@ -85,6 +101,13 @@ namespace LarkatorGUI
             if (string.IsNullOrWhiteSpace(_profile.Host))
             {
                 MessageBox.Show("Please enter a host name or IP address.", "Missing Field", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            
+            // Validiere Port
+            if (_profile.Port <= 0 || _profile.Port > 65535)
+            {
+                MessageBox.Show("Please enter a valid port number (1-65535).", "Invalid Port", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -109,6 +132,15 @@ namespace LarkatorGUI
                     "Missing Password", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
+            
+            if (string.IsNullOrWhiteSpace(_profile.RemotePath))
+            {
+                MessageBox.Show("Please enter a remote path.", "Missing Field", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Debug-Ausgabe für Port vor dem Speichern
+            System.Diagnostics.Debug.WriteLine($"SaveProfile - Port: {_profile.Port}");
 
             // Check for name conflict when adding a new profile
             if (_isNewProfile)
@@ -152,6 +184,43 @@ namespace LarkatorGUI
             if (_profile != null)
             {
                 _profile.PrivateKeyPassphrase = PrivateKeyPassphraseBox.Password;
+            }
+        }
+        
+        private void PortTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            // Nur Zahlen erlauben
+            e.Handled = _numericRegex.IsMatch(e.Text);
+        }
+        
+        private void PortTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            UpdatePortFromTextBox();
+        }
+        
+        private void UpdatePortFromTextBox()
+        {
+            if (PortTextBox != null && _profile != null)
+            {
+                if (int.TryParse(PortTextBox.Text, out int portValue))
+                {
+                    // Stelle sicher, dass der Port im gültigen Bereich liegt
+                    if (portValue < 1) portValue = 1;
+                    if (portValue > 65535) portValue = 65535;
+                    
+                    // Direktes Setzen am Profil
+                    _profile.Port = portValue;
+                    
+                    // Debug-Ausgabe
+                    System.Diagnostics.Debug.WriteLine($"UpdatePortFromTextBox - Port gesetzt auf: {portValue}");
+                }
+                else
+                {
+                    // Bei ungültigem Wert Standard-Port setzen
+                    _profile.Port = 22;
+                    PortTextBox.Text = "22";
+                    System.Diagnostics.Debug.WriteLine("UpdatePortFromTextBox - Ungültiger Port-Wert, auf 22 zurückgesetzt");
+                }
             }
         }
     }

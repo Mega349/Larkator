@@ -224,8 +224,16 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Grid.Column="0" Text="{Binding StatusText}" TextWrapping="NoWrap" Foreground="AntiqueWhite" Opacity="0.5"/>
                 <TextBlock Grid.Column="1" Text="{Binding StatusDetailText}" TextWrapping="NoWrap" Foreground="AntiqueWhite" Opacity="0.5" HorizontalAlignment="Right"/>
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center"
-                          Visibility="{Binding SftpConfig.UseSftp, ElementName=root, Converter={StaticResource BoolToVisibilityConverter}}">
+                <TextBlock Grid.Column="2" Margin="10,0,10,0" Foreground="#FFAAFF" Opacity="0.7"
+                           Visibility="{Binding SftpConfig.UseSftp, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <TextBlock.Text>
+                        <MultiBinding StringFormat="Last Modified: {0:yyyy-MM-dd HH:mm:ss}">
+                            <Binding Path="LastSavegameModifiedDate" />
+                        </MultiBinding>
+                    </TextBlock.Text>
+                </TextBlock>
+                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center"
+                          Visibility="{Binding SftpConfig.UseSftp, Converter={StaticResource BoolToVisibilityConverter}}">
                     <TextBlock Text="Server:" Foreground="#FFAAFF" Opacity="0.7" Margin="8,0,5,0" VerticalAlignment="Center"/>
                     <ComboBox x:Name="ServerProfilesComboBox" Width="150" Margin="0,0,5,0" 
                              ItemsSource="{Binding SftpProfileManager.Profiles}" 
@@ -235,9 +243,8 @@
                     <fa:ImageAwesome Icon="Cog" Height="14" Width="14" Margin="0,0,8,0" Foreground="#FFAAFF" Opacity="0.7" 
                                    MouseDown="ServerProfiles_Click" VerticalAlignment="Center" Cursor="Hand"
                                    ToolTip="Manage server profiles"/>
+                    <TextBlock Text="SFTP Mode" Foreground="#FFAAFF" Opacity="0.7" Margin="8,0,0,0" FontWeight="Bold"/>
                 </StackPanel>
-                <TextBlock Grid.Column="3" Text="SFTP Mode" Foreground="#FFAAFF" Opacity="0.7" Margin="8,0,0,0" FontWeight="Bold"
-                           Visibility="{Binding SftpConfig.UseSftp, ElementName=root, Converter={StaticResource BoolToVisibilityConverter}}"/>
             </Grid>
         </Border>
 
