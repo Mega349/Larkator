@@ -35,6 +35,12 @@ namespace LarkatorGUI
                 PrivateKeyPassphraseBox.Password = _profile.PrivateKeyPassphrase;
             }
 
+            // Set RCON password
+            if (!string.IsNullOrEmpty(_profile.RconPassword))
+            {
+                RconPasswordBox.Password = _profile.RconPassword;
+            }
+
             // Set title based on edit or new profile
             Title = _isNewProfile ? "Add Server Profile" : "Edit Server Profile";
         }
@@ -43,6 +49,7 @@ namespace LarkatorGUI
         {
             // Stellen Sie sicher, dass der Port aktualisiert wird
             UpdatePortFromTextBox();
+            UpdateRconPortFromTextBox();
             
             // Apply the changes
             ApplyButton_Click(sender, e);
@@ -87,6 +94,7 @@ namespace LarkatorGUI
         {
             // Stellen Sie sicher, dass der Port aktualisiert wird
             UpdatePortFromTextBox();
+            UpdateRconPortFromTextBox();
             
             // Debug-Ausgabe für Port
             System.Diagnostics.Debug.WriteLine($"ApplyButton_Click - Port: {_profile.Port}");
@@ -139,6 +147,28 @@ namespace LarkatorGUI
                 return;
             }
 
+            // Validate RCON fields if RCON is enabled
+            if (_profile.UseRcon)
+            {
+                if (string.IsNullOrWhiteSpace(_profile.RconHost))
+                {
+                    MessageBox.Show("Please enter an RCON host name or IP address.", "Missing Field", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (_profile.RconPort <= 0 || _profile.RconPort > 65535)
+                {
+                    MessageBox.Show("Please enter a valid RCON port number (1-65535).", "Invalid Port", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(_profile.RconPassword))
+                {
+                    MessageBox.Show("Please enter an RCON password.", "Missing Field", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+            }
+
             // Debug-Ausgabe für Port vor dem Speichern
             System.Diagnostics.Debug.WriteLine($"SaveProfile - Port: {_profile.Port}");
 
@@ -187,6 +217,14 @@ namespace LarkatorGUI
             }
         }
         
+        private void RconPasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (_profile != null)
+            {
+                _profile.RconPassword = RconPasswordBox.Password;
+            }
+        }
+        
         private void PortTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             // Nur Zahlen erlauben
@@ -196,6 +234,11 @@ namespace LarkatorGUI
         private void PortTextBox_LostFocus(object sender, RoutedEventArgs e)
         {
             UpdatePortFromTextBox();
+        }
+        
+        private void RconPortTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            UpdateRconPortFromTextBox();
         }
         
         private void UpdatePortFromTextBox()
@@ -220,6 +263,32 @@ namespace LarkatorGUI
                     _profile.Port = 22;
                     PortTextBox.Text = "22";
                     System.Diagnostics.Debug.WriteLine("UpdatePortFromTextBox - Ungültiger Port-Wert, auf 22 zurückgesetzt");
+                }
+            }
+        }
+        
+        private void UpdateRconPortFromTextBox()
+        {
+            if (RconPortTextBox != null && _profile != null)
+            {
+                if (int.TryParse(RconPortTextBox.Text, out int portValue))
+                {
+                    // Stelle sicher, dass der Port im gültigen Bereich liegt
+                    if (portValue < 1) portValue = 1;
+                    if (portValue > 65535) portValue = 65535;
+                    
+                    // Direktes Setzen am Profil
+                    _profile.RconPort = portValue;
+                    
+                    // Debug-Ausgabe
+                    System.Diagnostics.Debug.WriteLine($"UpdateRconPortFromTextBox - RCON Port gesetzt auf: {portValue}");
+                }
+                else
+                {
+                    // Bei ungültigem Wert Standard-Port setzen
+                    _profile.RconPort = 27020;
+                    RconPortTextBox.Text = "27020";
+                    System.Diagnostics.Debug.WriteLine("UpdateRconPortFromTextBox - Ungültiger RCON Port-Wert, auf 27020 zurückgesetzt");
                 }
             }
         }

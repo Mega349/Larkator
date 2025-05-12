@@ -28,6 +28,10 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Microsoft.Win32;
+using CoreRCON;
+using LarkatorGUI.Properties;
+using System.Threading;
 
 namespace LarkatorGUI
 {
@@ -175,11 +179,17 @@ namespace LarkatorGUI
             private set { SetValue(LastSavegameModifiedDateProperty, value); }
         }
 
+        public bool RconEnabled
+        {
+            get { return (bool)GetValue(RconEnabledProperty); }
+            set { SetValue(RconEnabledProperty, value); }
+        }
+
         public static readonly DependencyProperty IsDevModeProperty =
             DependencyProperty.Register("IsDevMode", typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
 
         public static readonly DependencyProperty ShowCountsProperty =
-            DependencyProperty.Register("ShowCounts", typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
+            DependencyProperty.Register("ShowCounts", typeof(bool), typeof(MainWindow), new PropertyMetadata(true));
 
         public static readonly DependencyProperty ResultTotalCountProperty =
             DependencyProperty.Register("ResultTotalCount", typeof(int), typeof(MainWindow), new PropertyMetadata(0));
@@ -222,6 +232,9 @@ namespace LarkatorGUI
 
         public static readonly DependencyProperty LastSavegameModifiedDateProperty =
             DependencyProperty.Register("LastSavegameModifiedDate", typeof(DateTime), typeof(MainWindow), new PropertyMetadata(DateTime.MinValue));
+
+        public static readonly DependencyProperty RconEnabledProperty =
+            DependencyProperty.Register("RconEnabled", typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
 
         ArkReader arkReader;
         FileSystemWatcher fileWatcher;
@@ -1199,6 +1212,9 @@ namespace LarkatorGUI
             // Subscribe to profile changes
             SftpProfileManager.ProfileChanged -= SftpProfileManager_ProfileChanged; // Vermeide doppelte Registrierung
             SftpProfileManager.ProfileChanged += SftpProfileManager_ProfileChanged;
+            
+            // Update RCON settings based on the current profile
+            UpdateProfileSettings();
         }
 
         private async Task PerformSftpConversion()
@@ -1515,15 +1531,8 @@ namespace LarkatorGUI
 
         private async void SftpProfileManager_ProfileChanged(object sender, EventArgs e)
         {
-            // Debug-Ausgabe vor dem Laden der Einstellungen
-            var selectedProfile = SftpProfileManager.Instance.SelectedProfile;
-            System.Diagnostics.Debug.WriteLine($"ProfileChanged - Selektiertes Profil: {selectedProfile?.Name}, Port: {selectedProfile?.Port}");
-            
             // Reload settings from the newly selected profile
-            LoadSftpSettings();
-            
-            // Debug-Ausgabe nach dem Laden der Einstellungen
-            System.Diagnostics.Debug.WriteLine($"ProfileChanged - Nach LoadSftpSettings, Port: {SftpConfig.Port}");
+            UpdateProfileSettings();
             
             // Update the map image based on the new profile
             DiscoverCalibration();
@@ -1540,6 +1549,177 @@ namespace LarkatorGUI
             var window = new ServerProfilesWindow();
             window.Owner = this;
             window.ShowDialog();
+        }
+
+        private void UpdateProfileSettings()
+        {
+            // Update settings from the currently selected profile
+            var profile = SftpProfileManager.Instance.SelectedProfile;
+            if (profile != null)
+            {
+                // Set RCON availability
+                RconEnabled = profile.UseRcon && !string.IsNullOrEmpty(profile.RconHost) && 
+                              !string.IsNullOrEmpty(profile.RconPassword);
+            }
+            else
+            {
+                RconEnabled = false;
+            }
+        }
+
+        private async void SaveWorld_Click(object sender, MouseButtonEventArgs e)
+        {
+            try
+            {
+                var profile = SftpProfileManager.Instance.SelectedProfile;
+                if (profile == null || !profile.UseRcon)
+                {
+                    MessageBox.Show("No RCON profile selected or RCON is not enabled for this profile.",
+                        "RCON Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                IsLoading = true;
+                
+                try
+                {
+                    // Verwende direktes Socket anstelle der CoreRCON-Bibliothek
+                    await Task.Run(async () =>
+                    {
+                        try
+                        {
+                            // Hostname auflösen
+                            IPAddress ipAddress;
+                            try 
+                            {
+                                // Versuche zuerst direkt als IP-Adresse zu parsen
+                                ipAddress = IPAddress.Parse(profile.RconHost);
+                            }
+                            catch 
+                            {
+                                // Wenn das fehlschlägt, behandle es als Hostnamen
+                                var addresses = Dns.GetHostAddresses(profile.RconHost);
+                                if (addresses.Length == 0)
+                                    throw new Exception($"Konnte keine IP-Adresse für den Hostnamen {profile.RconHost} auflösen.");
+                                
+                                // Nehme die erste IPv4-Adresse, falls vorhanden
+                                ipAddress = addresses.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) 
+                                        ?? addresses[0]; // Sonst nehme die erste verfügbare
+                            }
+
+                            // Einfache RCON-Implementierung mit direktem Socket
+                            string response = await SendRconCommandAsync(
+                                ipAddress.ToString(), 
+                                profile.RconPort, 
+                                profile.RconPassword, 
+                                "SaveWorld"
+                            );
+                            
+                            System.Diagnostics.Debug.WriteLine($"RCON Response: {response}");
+                            
+                            Dispatcher.Invoke(() =>
+                            {
+                                MessageBox.Show($"World save command sent successfully.\nResponse: {response}",
+                                    "World Save", MessageBoxButton.OK, MessageBoxImage.Information);
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            Dispatcher.Invoke(() =>
+                            {
+                                MessageBox.Show($"Error sending RCON command: {ex.Message}",
+                                    "RCON Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                            });
+                        }
+                    });
+                }
+                finally
+                {
+                    IsLoading = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                IsLoading = false;
+            }
+        }
+        
+        /// <summary>
+        /// Sendet einen RCON-Befehl direkt über Socket an den ARK-Server
+        /// </summary>
+        private async Task<string> SendRconCommandAsync(string host, int port, string password, string command)
+        {
+            const int SERVERDATA_AUTH = 3;
+            const int SERVERDATA_EXECCOMMAND = 2;
+            const int SERVERDATA_RESPONSE_VALUE = 0;
+            
+            using (var client = new System.Net.Sockets.TcpClient())
+            {
+                // Verbindung zum Server herstellen
+                await client.ConnectAsync(host, port);
+                
+                using (var stream = client.GetStream())
+                {
+                    // AUTH Paket senden
+                    int requestId = new Random().Next(1, 999999);
+                    byte[] authPacket = CreateRconPacket(requestId, SERVERDATA_AUTH, password);
+                    await stream.WriteAsync(authPacket, 0, authPacket.Length);
+                    
+                    // Antwort lesen
+                    byte[] buffer = new byte[4096];
+                    int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                    
+                    // Paketgröße (erste 4 Bytes) überprüfen
+                    int size = BitConverter.ToInt32(buffer, 0);
+                    if (size < 10) // Min. Paketgröße
+                        throw new Exception("Auth failed: Invalid packet size");
+                    
+                    // Request ID überprüfen (nächste 4 Bytes)
+                    int responseId = BitConverter.ToInt32(buffer, 4);
+                    if (responseId != requestId)
+                        throw new Exception("Auth failed: Invalid response ID");
+                    
+                    // COMMAND Paket senden
+                    requestId = new Random().Next(1, 999999);
+                    byte[] commandPacket = CreateRconPacket(requestId, SERVERDATA_EXECCOMMAND, command);
+                    await stream.WriteAsync(commandPacket, 0, commandPacket.Length);
+                    
+                    // Antwort lesen
+                    bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                    
+                    if (bytesRead < 12) // Min. Paketgröße + Overhead
+                        return "Command sent, no response data";
+                    
+                    // Antwort extrahieren (ab Byte 12)
+                    return System.Text.Encoding.ASCII.GetString(buffer, 12, bytesRead - 14); // -14, um die Terminatoren auszulassen
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Erstellt ein RCON-Paket nach dem Source RCON Protokoll
+        /// </summary>
+        private byte[] CreateRconPacket(int requestId, int type, string payload)
+        {
+            byte[] payloadBytes = System.Text.Encoding.ASCII.GetBytes(payload);
+            int packetSize = 10 + payloadBytes.Length; // 10 = 4 (Request ID) + 4 (Type) + 2 (String Terminatoren)
+            
+            using (var ms = new System.IO.MemoryStream(packetSize + 4)) // +4 für die Größenangabe
+            {
+                byte[] sizeBytes = BitConverter.GetBytes(packetSize);
+                byte[] requestIdBytes = BitConverter.GetBytes(requestId);
+                byte[] typeBytes = BitConverter.GetBytes(type);
+                byte[] terminators = new byte[2]; // Zwei Null-Bytes als Terminatoren
+                
+                ms.Write(sizeBytes, 0, 4);
+                ms.Write(requestIdBytes, 0, 4);
+                ms.Write(typeBytes, 0, 4);
+                ms.Write(payloadBytes, 0, payloadBytes.Length);
+                ms.Write(terminators, 0, 2);
+                
+                return ms.ToArray();
+            }
         }
 
         // Add the OnPropertyChanged method to notify bindings
