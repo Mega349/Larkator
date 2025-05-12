@@ -19,6 +19,10 @@ namespace LarkatorGUI
         private bool _usePrivateKey;
         private string _privateKeyPath;
         private string _privateKeyPassphrase;
+        private bool _useRcon;
+        private string _rconHost;
+        private int _rconPort = 27020;
+        private string _rconPassword;
 
         public string Name
         {
@@ -42,6 +46,9 @@ namespace LarkatorGUI
                 {
                     _host = value;
                     OnPropertyChanged();
+                    
+                    // Automatisch auch den RCON-Host aktualisieren
+                    RconHost = value;
                 }
             }
         }
@@ -136,6 +143,59 @@ namespace LarkatorGUI
                 if (_privateKeyPassphrase != value)
                 {
                     _privateKeyPassphrase = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public bool UseRcon
+        {
+            get { return _useRcon; }
+            set
+            {
+                if (_useRcon != value)
+                {
+                    _useRcon = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public string RconHost
+        {
+            get { return _rconHost; }
+            set
+            {
+                if (_rconHost != value)
+                {
+                    _rconHost = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        [JsonProperty(TypeNameHandling = TypeNameHandling.None)]
+        public int RconPort
+        {
+            get { return _rconPort; }
+            set
+            {
+                if (_rconPort != value)
+                {
+                    _rconPort = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public string RconPassword
+        {
+            get { return _rconPassword; }
+            set
+            {
+                if (_rconPassword != value)
+                {
+                    _rconPassword = value;
                     OnPropertyChanged();
                 }
             }
