@@ -207,7 +207,7 @@ namespace LarkatorGUI
         {
             if (Int32.TryParse(_textbox.Text, out int newValue))
             {
-                // Stelle sicher, dass der Wert im gültigen Bereich liegt
+                // Ensure value is within valid range
                 if (newValue > MaxValue)
                 {
                     newValue = MaxValue;
@@ -217,15 +217,15 @@ namespace LarkatorGUI
                     newValue = MinValue;
                 }
                 
-                // Setze den neuen Wert
+                // Set new value
                 Value = newValue;
                 
-                // Debug-Ausgabe
+                // Debug output
                 System.Diagnostics.Debug.WriteLine($"NumericEntryControl - UpdateValueFromTextBox: {newValue}");
             }
             else
             {
-                // Wenn der Text kein gültiger numerischer Wert ist, setze den vorherigen Wert zurück
+                // If text is not a valid numeric value, restore previous value
                 _textbox.Text = Value.ToString();
             }
         }

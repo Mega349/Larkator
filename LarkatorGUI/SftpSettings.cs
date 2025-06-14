@@ -20,13 +20,13 @@ namespace LarkatorGUI
 
         public bool IsValid()
         {
-            // Wenn UsePrivateKey aktiviert ist, muss ein PrivateKeyPath vorhanden sein
+            // If UsePrivateKey is enabled, a PrivateKeyPath must be present
             bool hasValidPrivateKey = !UsePrivateKey || (UsePrivateKey && !string.IsNullOrEmpty(PrivateKeyPath));
             
-            // Wenn UsePrivateKey deaktiviert ist, muss ein Passwort vorhanden sein
+            // If UsePrivateKey is disabled, a password must be present
             bool hasValidPassword = !string.IsNullOrEmpty(Password);
             
-            // Gültige Authentifizierung, wenn entweder privater Schlüssel oder Passwort vorhanden ist
+            // Valid authentication if either private key or password is present
             bool hasValidAuth = (hasValidPrivateKey && UsePrivateKey) || (!UsePrivateKey && hasValidPassword);
             
             // Debugging Information

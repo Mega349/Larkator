@@ -190,7 +190,7 @@ namespace LarkatorGUI
     }
 
     /// <summary>
-    /// Konvertiert zu true, wenn SFTP aktiv ist aber kein Private Key verwendet wird
+    /// Converts to true when SFTP is active but no private key is used
     /// </summary>
     public class SftpPasswordEnabledConverter : IMultiValueConverter
     {
@@ -214,7 +214,7 @@ namespace LarkatorGUI
     }
 
     /// <summary>
-    /// Einfacher Boolean-Konverter für XAML
+    /// Simple boolean converter for XAML
     /// </summary>
     public class BoolConverter : IValueConverter
     {
