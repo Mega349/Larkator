@@ -310,7 +310,7 @@ namespace LarkatorGUI
 #if DEBUG
                 return DEV_STRING;
 #else
-                // Version aus der Assembly lesen für Release-Builds
+                // Read version from assembly for release builds
                 var assembly = System.Reflection.Assembly.GetExecutingAssembly();
                 var version = assembly.GetName().Version;
                 return version.ToString();
@@ -349,17 +349,17 @@ namespace LarkatorGUI
 
         private void DiscoverCalibration()
         {
-            // Bestimme den zu verwendenden Dateinamen basierend auf Lokal- oder Remote-Pfad
+            // Determine filename to use based on local or remote path
             string filename;
             
             if (SftpConfig.UseSftp && !string.IsNullOrEmpty(SftpConfig.RemotePath))
             {
-                // Bei SFTP den Remote-Pfad verwenden
+                // Use remote path for SFTP
                 filename = Path.GetFileNameWithoutExtension(SftpConfig.RemotePath);
             }
             else
             {
-                // Bei lokaler Datei den Standard-Pfad verwenden
+                // Use standard path for local file
                 filename = Path.GetFileNameWithoutExtension(Properties.Settings.Default.SaveFile);
             }
             
@@ -758,18 +758,18 @@ namespace LarkatorGUI
                 {
                     searches = JsonConvert.DeserializeObject<Collection<SearchCriteria>>(Properties.Settings.Default.SavedSearches);
                     
-                    // Zeilenumbrüche aus Speziesnamen entfernen
+                    // Remove line breaks from species names
                     foreach (var search in searches)
                     {
                         if (!string.IsNullOrEmpty(search.Species))
                         {
-                            // Entferne alle Arten von Zeilenumbrüchen und trimme Leerzeichen
+                            // Remove all types of line breaks and trim whitespace
                             search.Species = search.Species.Replace("\r\n", " ")
                                                 .Replace("\n", " ")
                                                 .Replace("\r", " ")
-                                                .Replace("\t", " "); // Tabs ersetzen
+                                                .Replace("\t", " "); // Replace tabs
                             
-                            // Mehrfache Leerzeichen durch ein einzelnes ersetzen (wiederhole bis keine Änderungen mehr)
+                            // Replace multiple spaces with a single space (repeat until no changes)
                             string previous;
                             do {
                                 previous = search.Species;
@@ -797,13 +797,13 @@ namespace LarkatorGUI
             if (String.IsNullOrWhiteSpace(NewSearch.Species))
                 return;
 
-            // Reinigen des Artennamens von Zeilenumbrüchen
+            // Clean species name of line breaks
             NewSearch.Species = NewSearch.Species.Replace("\r\n", " ")
                                 .Replace("\n", " ")
                                 .Replace("\r", " ")
-                                .Replace("\t", " "); // Tabs ersetzen
+                                .Replace("\t", " "); // Replace tabs
             
-            // Mehrfache Leerzeichen durch ein einzelnes ersetzen (wiederhole bis keine Änderungen mehr)
+            // Replace multiple spaces with a single space (repeat until no changes)
             string previous;
             do {
                 previous = NewSearch.Species;
@@ -860,16 +860,16 @@ namespace LarkatorGUI
                         if (tempListSearch.Count == 0 || tempListSearch.Where(dino => dino.Species == newDino).Count() == 0)
                         {
                             tempSearch = new SearchCriteria(NewSearch);
-                            // Reinigen des gefundenen Artennamens
+                            // Clean found species name
                             string cleanedSpecies = newDino;
                             if (!string.IsNullOrEmpty(cleanedSpecies))
                             {
                                 cleanedSpecies = cleanedSpecies.Replace("\r\n", " ")
                                             .Replace("\n", " ")
                                             .Replace("\r", " ")
-                                            .Replace("\t", " "); // Tabs ersetzen
+                                            .Replace("\t", " "); // Replace tabs
                                 
-                                // Mehrfache Leerzeichen durch ein einzelnes ersetzen (wiederhole bis keine Änderungen mehr)
+                                // Replace multiple spaces with a single space (repeat until no changes)
                                 string previous2;
                                 do {
                                     previous2 = cleanedSpecies;
@@ -1121,10 +1121,10 @@ namespace LarkatorGUI
             IsLoading = true;
             try
             {
-                // Stelle sicher, dass die SFTP-Konfiguration aktuell ist
+                // Ensure SFTP configuration is current
                 LoadSftpSettings();
                 
-                // Prüfe SFTP Status und Validität
+                // Check SFTP status and validity
                 bool useSftp = SftpConfig.UseSftp;
                 bool sftpValid = SftpConfig.IsValid();
                 
@@ -1135,12 +1135,12 @@ namespace LarkatorGUI
                     StatusText = "Processing saved ARK via SFTP";
                     StatusDetailText = "...connecting to SFTP server";
                     
-                    // Debugging-Ausgabe
+                    // Debug output
                     System.Diagnostics.Debug.WriteLine($"Using SFTP with server: {SftpConfig.Host}, UsePrivateKey={SftpConfig.UsePrivateKey}");
                     
-                    // Erzwinge UI-Update vor SFTP-Verbindung
+                    // Force UI update before SFTP connection
                     await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
-                    await Task.Delay(200); // Längeres Delay für zuverlässigeres UI-Update
+                    await Task.Delay(200); // Longer delay for more reliable UI update
                     
                     try 
                     {
@@ -1148,7 +1148,7 @@ namespace LarkatorGUI
                     }
                     catch (Exception ex)
                     {
-                        // Bei SFTP-Fehler zeigen wir die Meldung an und brechen ab
+                        // On SFTP error, show message and abort
                         StatusText = "SFTP connection failed";
                         StatusDetailText = ex.Message;
                         MessageBox.Show($"SFTP Error: {ex.Message}\n\nPlease check your connection settings.", 
@@ -1181,17 +1181,17 @@ namespace LarkatorGUI
 
         private void LoadSftpSettings()
         {
-            // Debug-Ausgabe vor dem Laden
+            // Debug output before loading
             System.Diagnostics.Debug.WriteLine($"LoadSftpSettings - SftpPort in Settings: {Properties.Settings.Default.SftpPort}");
 
             SftpConfig.Host = Properties.Settings.Default.SftpHost;
             
-            // Stelle sicher, dass ein gültiger Port verwendet wird
+            // Ensure a valid port is used
             int port = Properties.Settings.Default.SftpPort;
             if (port <= 0 || port > 65535)
             {
-                port = 22; // Standard-Port, falls ungültig
-                System.Diagnostics.Debug.WriteLine($"LoadSftpSettings - Korrigiere ungültigen Port zu Standard-Port 22");
+                port = 22; // Default port if invalid
+                System.Diagnostics.Debug.WriteLine($"LoadSftpSettings - Correcting invalid port to default port 22");
             }
             SftpConfig.Port = port;
             
@@ -1206,11 +1206,11 @@ namespace LarkatorGUI
             // Force property notification to update UI
             OnPropertyChanged(nameof(SftpConfig));
             
-            // Debugging-Ausgabe für SFTP-Einstellungen
+            // Debug output for SFTP settings
             System.Diagnostics.Debug.WriteLine($"SFTP Settings loaded: UseSftp={SftpConfig.UseSftp}, Port={SftpConfig.Port}, UsePrivateKey={SftpConfig.UsePrivateKey}");
 
             // Subscribe to profile changes
-            SftpProfileManager.ProfileChanged -= SftpProfileManager_ProfileChanged; // Vermeide doppelte Registrierung
+            SftpProfileManager.ProfileChanged -= SftpProfileManager_ProfileChanged; // Avoid double registration
             SftpProfileManager.ProfileChanged += SftpProfileManager_ProfileChanged;
             
             // Update RCON settings based on the current profile
@@ -1221,8 +1221,8 @@ namespace LarkatorGUI
         {
             try
             {
-                // Die "connecting" Meldung wird jetzt bereits vorher gesetzt
-                // Wir brauchen hier keinen erneuten Status
+                // The "connecting" message is now set earlier
+                // We don't need to set status here again
                 
                 // Setup SFTP client
                 SftpClient client;
@@ -1273,13 +1273,13 @@ namespace LarkatorGUI
                     
                     System.Diagnostics.Debug.WriteLine("Connected to SFTP server successfully");
                     
-                    // Hole das Änderungsdatum der Remote-Datei
+                    // Get remote file modification date
                     try
                     {
                         var fileAttrs = client.GetAttributes(SftpConfig.RemotePath);
                         var lastModifiedDate = fileAttrs.LastWriteTime;
                         
-                        // Setze eine Property für die UI-Anzeige
+                        // Set property for UI display
                         LastSavegameModifiedDate = lastModifiedDate;
                         
                         System.Diagnostics.Debug.WriteLine($"Remote savegame last modified: {lastModifiedDate}");
@@ -1287,13 +1287,13 @@ namespace LarkatorGUI
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"Could not get remote file information: {ex.Message}");
-                        // Wir setzen trotzdem mit dem Download fort
+                        // Continue with download anyway
                     }
                     
                     StatusDetailText = "...downloading savegame";
-                    // UI aktualisieren vor dem Download
+                    // Update UI before download
                     await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
-                    await Task.Delay(100); // Kurzes Delay für UI-Update
+                    await Task.Delay(100); // Short delay for UI update
                     
                     // Create temporary file
                     string tempFile = Path.Combine(Path.GetTempPath(), Path.GetFileName(SftpConfig.RemotePath));
@@ -1310,9 +1310,9 @@ namespace LarkatorGUI
                     
                     // Process the file
                     StatusDetailText = "...processing savegame";
-                    // UI aktualisieren vor der Verarbeitung
+                    // Update UI before processing
                     await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
-                    await Task.Delay(100); // Kurzes Delay für UI-Update
+                    await Task.Delay(100); // Short delay for UI update
                     
                     System.Diagnostics.Debug.WriteLine("Processing downloaded file");
                     await arkReader.PerformConversion(tempFile);
@@ -1607,7 +1607,7 @@ namespace LarkatorGUI
                                         ?? addresses[0]; // Sonst nehme die erste verfügbare
                             }
 
-                            // Einfache RCON-Implementierung mit direktem Socket
+                            // Simple RCON implementation with direct socket
                             string response = await SendRconCommandAsync(
                                 ipAddress.ToString(), 
                                 profile.RconPort, 
@@ -1698,19 +1698,19 @@ namespace LarkatorGUI
         }
         
         /// <summary>
-        /// Erstellt ein RCON-Paket nach dem Source RCON Protokoll
+        /// Creates an RCON packet according to the Source RCON Protocol
         /// </summary>
         private byte[] CreateRconPacket(int requestId, int type, string payload)
         {
             byte[] payloadBytes = System.Text.Encoding.ASCII.GetBytes(payload);
-            int packetSize = 10 + payloadBytes.Length; // 10 = 4 (Request ID) + 4 (Type) + 2 (String Terminatoren)
+            int packetSize = 10 + payloadBytes.Length; // 10 = 4 (Request ID) + 4 (Type) + 2 (String Terminators)
             
-            using (var ms = new System.IO.MemoryStream(packetSize + 4)) // +4 für die Größenangabe
+            using (var ms = new System.IO.MemoryStream(packetSize + 4)) // +4 for size field
             {
                 byte[] sizeBytes = BitConverter.GetBytes(packetSize);
                 byte[] requestIdBytes = BitConverter.GetBytes(requestId);
                 byte[] typeBytes = BitConverter.GetBytes(type);
-                byte[] terminators = new byte[2]; // Zwei Null-Bytes als Terminatoren
+                byte[] terminators = new byte[2]; // Two null bytes as terminators
                 
                 ms.Write(sizeBytes, 0, 4);
                 ms.Write(requestIdBytes, 0, 4);

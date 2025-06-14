@@ -105,8 +105,8 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBox Grid.Column="0" Text="{Binding RconHost}" IsReadOnly="True" IsEnabled="False" Background="#20FFFFFF"
-                         ToolTip="Wird automatisch vom SFTP-Host übernommen"/>
-                <TextBlock Grid.Column="1" Text="(Automatisch vom SFTP-Host)" VerticalAlignment="Center" Margin="5,0,0,0"
+                         ToolTip="Automatically taken from SFTP host"/>
+                <TextBlock Grid.Column="1" Text="(Automatically from SFTP host)" VerticalAlignment="Center" Margin="5,0,0,0"
                            FontSize="10" Foreground="#99FFFFFF"/>
             </Grid>
             

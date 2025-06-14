@@ -19,8 +19,8 @@ namespace LarkatorGUI
             _isNewProfile = profile == null;
             _profile = profile ?? new SftpServerProfile();
             
-            // Debug-Ausgabe für Port vor der Dialogdarstellung
-            System.Diagnostics.Debug.WriteLine($"ServerProfileDialog - Initialisierung mit Port: {_profile.Port}");
+            // Debug output for port before dialog display
+            System.Diagnostics.Debug.WriteLine($"ServerProfileDialog - Initialization with port: {_profile.Port}");
             
             DataContext = _profile;
 
@@ -47,7 +47,7 @@ namespace LarkatorGUI
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            // Stellen Sie sicher, dass der Port aktualisiert wird
+            // Ensure port is updated
             UpdatePortFromTextBox();
             UpdateRconPortFromTextBox();
             
@@ -86,7 +86,7 @@ namespace LarkatorGUI
             if (result == true)
             {
                 _profile.PrivateKeyPath = dialog.FileName;
-                System.Diagnostics.Debug.WriteLine($"Private Key Pfad gesetzt: {_profile.PrivateKeyPath}");
+                System.Diagnostics.Debug.WriteLine($"Private Key path set: {_profile.PrivateKeyPath}");
             }
         }
 
@@ -227,7 +227,7 @@ namespace LarkatorGUI
         
         private void PortTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
-            // Nur Zahlen erlauben
+            // Only allow numbers
             e.Handled = _numericRegex.IsMatch(e.Text);
         }
         
@@ -247,22 +247,22 @@ namespace LarkatorGUI
             {
                 if (int.TryParse(PortTextBox.Text, out int portValue))
                 {
-                    // Stelle sicher, dass der Port im gültigen Bereich liegt
+                    // Ensure port is within valid range
                     if (portValue < 1) portValue = 1;
                     if (portValue > 65535) portValue = 65535;
                     
-                    // Direktes Setzen am Profil
+                    // Direct setting on profile
                     _profile.Port = portValue;
                     
-                    // Debug-Ausgabe
-                    System.Diagnostics.Debug.WriteLine($"UpdatePortFromTextBox - Port gesetzt auf: {portValue}");
+                    // Debug output
+                    System.Diagnostics.Debug.WriteLine($"UpdatePortFromTextBox - Port set to: {portValue}");
                 }
                 else
                 {
-                    // Bei ungültigem Wert Standard-Port setzen
+                    // Set default port for invalid value
                     _profile.Port = 22;
                     PortTextBox.Text = "22";
-                    System.Diagnostics.Debug.WriteLine("UpdatePortFromTextBox - Ungültiger Port-Wert, auf 22 zurückgesetzt");
+                    System.Diagnostics.Debug.WriteLine("UpdatePortFromTextBox - Invalid port value, reset to 22");
                 }
             }
         }
